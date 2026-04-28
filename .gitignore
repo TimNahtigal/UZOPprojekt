@@ -2,3 +2,4 @@
 display/node_modules
 data/mmc.yaml
 /final_data
+widgets/__pycache__

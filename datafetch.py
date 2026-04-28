@@ -207,13 +207,23 @@ class DataBroker:
             for cluster_id in range(len(centroidi)):
                 scores = centroidi[cluster_id]
                 
-                top_indices = np.argpartition(scores, -10)[-10:]
+                top_indices = np.argpartition(scores, -10)[-10:] # TOP 10
                 
                 top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
-                
-                importance_per_cluster[cluster_id] = [
-                    vocab_array[idx] for idx in top_indices if scores[idx] > 0
+
+                raw_results = [
+                    (vocab_array[idx], scores[idx]) 
+                    for idx in top_indices if scores[idx] > 0
                 ]
+                
+                if raw_results:
+                    total_score = sum(weight for word, weight in raw_results)
+                    
+                    importance_per_cluster[cluster_id] = [
+                        (word, weight / total_score) for word, weight in raw_results
+                    ]
+                else:
+                    importance_per_cluster[cluster_id] = []
         else:
             if regression == "logregcv":
                 clf = LogisticRegressionCV(
@@ -240,12 +250,21 @@ class DataBroker:
             for i, cluster_id in enumerate(clf.classes_): 
                 coefs = clf.coef_[i]
                 
-                top_indices = np.argsort(np.abs(coefs))[::-1][:10]
-                
-                importance_per_cluster[cluster_id] = [
-                    (self.loaded_vocab[idx]) 
+                top_indices = np.argsort(np.abs(coefs))[::-1][:10] # TOP 10
+
+                raw_results = [
+                    (self.loaded_vocab[idx], abs(coefs[idx])) 
                     for idx in top_indices if coefs[idx] != 0
                 ]
+                
+                if raw_results:
+                        total_abs_score = sum(weight for _, weight in raw_results)
+                        
+                        importance_per_cluster[cluster_id] = [
+                            (word, weight / total_abs_score) for word, weight in raw_results
+                        ]
+                else:
+                    importance_per_cluster[cluster_id] = []
 
 
         # Display results
@@ -264,6 +283,7 @@ if __name__ == "__main__":
 
     #broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression="logreg")
     broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression=None)
+
 
 
 

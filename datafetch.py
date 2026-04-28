@@ -34,6 +34,8 @@ class DataBroker:
     loaded_vocab : np.ndarray[str] = None
 
     random_seed = None
+
+    _logger = None
     
     def clearAllCache(self):
         cached_parameters = None
@@ -41,11 +43,15 @@ class DataBroker:
         cached_data_by_topic = None
         cached_topic = None
 
-    def __init__(self, dbConnection : sqlite3.Connection, random_seed = None):
+    def __init__(self, dbConnection : sqlite3.Connection, random_seed = None, logger = None):
         self.db_connection = dbConnection
         self.dict_of_regions = getDictOfRegions()
         self.loaded_vocab = np.load('./final_data/tfidf_vocab.npy', allow_pickle=True)
         self.random_seed = random_seed
+        if logger is None:
+            self._logger = print
+        else:
+            self._logger = logger
     
     def getData(self) -> pd.DataFrame:
         return self.cached_data
@@ -133,7 +139,7 @@ class DataBroker:
             - logregcv   regresija z prečnim preverjanjem
         """
         if self.cached_data == None:
-            print("Novice še niso pridobljene! Pridobil jih bom sam")
+            self._logger("Novice še niso pridobljene! Pridobil jih bom sam")
             self.pridobiNovice()
 
         if topics is None:
@@ -147,33 +153,33 @@ class DataBroker:
         else:
             data_in_topic = self.cached_data[self.cached_data["topic"].isin(topics)]
 
-        print("Started")
+        self._logger("Started")
         
         # Naredi clusterje
         tfidf_data = np.stack(data_in_topic["tfidf"].values)
         kmeans = KMeans(n_clusters=st_novic, random_state=self.random_seed, init='k-means++', n_init=20)
         data_in_topic["cluster_label"] = kmeans.fit_predict(tfidf_data)
         
-        print("Made clusters")
+        self._logger("Made clusters")
 
         # Najde sredine clusterjev
         centroidi = kmeans.cluster_centers_
         closest_indices, _ = pairwise_distances_argmin_min(centroidi, tfidf_data)
         most_representative_news = data_in_topic.iloc[closest_indices]
-        #print(most_representative_news)
-        print("Found cluster centers")
+        #self._logger(most_representative_news)
+        self._logger("Found cluster centers")
 
         # Sortiraj po najbolj pomembnem clusterju (najbolj pomemben cluster je tist z največ novic)
         cluster_counts = data_in_topic['cluster_label'].value_counts()
         most_representative_news['cluster_size'] = most_representative_news['cluster_label'].map(cluster_counts)
         most_representative_news = most_representative_news.sort_values(by='cluster_size', ascending=False)
 
-        print("Sorted clusters")
+        self._logger("Sorted clusters")
 
-        print("\n--- Število novic po clusterjih ---")
+        self._logger("\n--- Število novic po clusterjih ---")
         for cluster_id, count in cluster_counts.items():
-            print(f"Cluster {cluster_id}: {count} novic")
-        print("-----------------------------------\n")
+            self._logger(f"Cluster {cluster_id}: {count} novic")
+        self._logger("-----------------------------------\n")
 
         # coords = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(tfidf_data)
         # plt.figure(figsize=(10, 7))
@@ -192,7 +198,7 @@ class DataBroker:
             return most_representative_news
         
         if regression is None:
-            print("Not using regression")
+            self._logger("Not using regression")
             centroidi = kmeans.cluster_centers_
 
             importance_per_cluster = {}
@@ -227,7 +233,7 @@ class DataBroker:
                     n_jobs=-1 # Multithreading
                 ).fit(tfidf_data, data_in_topic['cluster_label'])
             else:
-                print("Izberi regresijo!")
+                self._logger("Izberi regresijo!")
                 return None
             
             importance_per_cluster = {}
@@ -244,7 +250,7 @@ class DataBroker:
 
         # Display results
         for cluster, features in importance_per_cluster.items():
-            print(f"Cluster {cluster} Top Attributes: {features}")
+            self._logger(f"Cluster {cluster} Top Attributes: {features}")
 
         cluster_counts = data_in_topic['cluster_label'].value_counts().sort_index()
 
@@ -258,7 +264,6 @@ if __name__ == "__main__":
 
     #broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression="logreg")
     broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression=None)
-
 
 
 

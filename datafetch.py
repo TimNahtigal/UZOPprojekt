@@ -280,10 +280,10 @@ if __name__ == "__main__":
 
     testParam = NoviceParametri(regions={"Gorenjska"})
     #testParam = NoviceParametri()
+    #print(broker.pridobiNovice(testParam))
 
     #broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression="logreg")
     broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression=None)
-
 
 
 

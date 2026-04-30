@@ -5,12 +5,16 @@ from PySide6.QtCore import Qt, QDate
 from widgets.console_widget import ConsoleWidget
 from widgets.map_widget import MapWidget
 from widgets.selector_widget import SelectorWidget
-import datafetch
+from datafetch import DataBroker, NoviceParametri
+import datetime as dt
+
+MAX_NUMBER_OF_TOPICS_DISPLAYED = 3
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.selected_regions = set()
+        self.active_topic = None
         
         # 1. New Date State
         self.current_start = QDate()
@@ -19,7 +23,7 @@ class MainWindow(QWidget):
         # Database Setup
         connection = sqlite3.connect('final_data/novice.db')
         connection.execute("PRAGMA foreign_keys = ON")
-        self.dataBroker = datafetch.DataBroker(connection, random_seed=0, logger=self.log)
+        self.dataBroker = DataBroker(connection, random_seed=0, logger=self.log)
         start_str, end_str = self.get_date_range(connection)
 
         # Initialize state from DB strings
@@ -41,10 +45,10 @@ class MainWindow(QWidget):
 
         # Logic Mapping
         self.map.region_clicked.connect(self.handle_map_selection)
-        
-        # 2. Connect date changes to controller
         self.selector.date_changed.connect(self.handle_date_change)
-        self.selector.action_clicked.connect(self.process_final_data)
+        self.selector.action_clicked.connect(self.pridobi_topice)
+        self.selector.get_news_clicked.connect(self.handle_get_news)
+        self.selector.topic_selected.connect(self.handle_topic_selection)
 
     def log(self, obj):
         self.console.log(str(obj))
@@ -61,10 +65,8 @@ class MainWindow(QWidget):
             cursor.close()
 
     def handle_date_change(self, start, end):
-        # Update the controller's state
         self.current_start = start
         self.current_end = end
-        self.log(f"Range updated: {start.toString(Qt.ISODate)} to {end.toString(Qt.ISODate)}")
 
     def handle_map_selection(self, region_name):
         if region_name in self.selected_regions:
@@ -75,15 +77,50 @@ class MainWindow(QWidget):
         sorted_list = sorted(list(self.selected_regions))
         self.map.set_highlighted_regions(self.selected_regions)
         self.selector.update_display(sorted_list)
-        self.log(f"Selection updated: {len(sorted_list)} regions selected")
 
-    def process_final_data(self):
-        # Uses the state saved in the controller
+    def pridobi_topice(self):
+        self.active_topic = None 
+        self.selector.clear_topics()
+
         date_range = f"{self.current_start.toString(Qt.ISODate)} to {self.current_end.toString(Qt.ISODate)}"
-        self.log(f"Final Process: {len(self.selected_regions)} regions | Period: {date_range}")
+        self.log(f"-"*25)
+        self.log(f"Started getting topics from {len(self.selected_regions)} regions | Period: {date_range}")
+        
+        # Novice od do + regije
+        self.log("Gadering the gossip")
+        q_start = self.current_start
+        q_end = self.current_end
+        start_dt = dt.datetime(q_start.year(), q_start.month(), q_start.day())
+        end_dt = dt.datetime(q_end.year(), q_end.month(), q_end.day())
+        params = NoviceParametri(
+            start_time=start_dt,
+            end_time=end_dt,
+            regions=self.selected_regions
+        )
+        _ = self.dataBroker.pridobiNovice(params=params)
+        self.log("Gossip gadered")
+
+        self.log("Ranking the topics")
+        df_topic = self.dataBroker.getPomembnostTopicov()
+        self.log(str(df_topic.head()))
+
+        self.selector.update_topics(df_topic, MAX_NUMBER_OF_TOPICS_DISPLAYED)
+        self.log(f"Displayed top {MAX_NUMBER_OF_TOPICS_DISPLAYED} topics.")
+    
+    def handle_topic_selection(self, topic_name):
+        self.active_topic = topic_name
+        self.log(f"Active topic set to: {topic_name}")
+        self.selector.set_active_topic(topic_name)
+
+    def handle_get_news(self, topic, method):
+        self.log(f"Fetching news for {topic} using {method}...")
+        self.dataBroker.topNnovicIzTopica()
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+    

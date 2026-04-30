@@ -22,7 +22,7 @@ def getDictOfRegions():
 class NoviceParametri:
     start_time : dt.datetime | None = None
     end_time : dt.datetime | None = None 
-    regions : set[str] | None = None
+    regions : set[str] = None
 
 
 class DataBroker:
@@ -38,10 +38,10 @@ class DataBroker:
     _logger = None
     
     def clearAllCache(self):
-        cached_parameters = None
-        cached_data = None
-        cached_data_by_topic = None
-        cached_topic = None
+        self.cached_parameters = None
+        self.cached_data = None
+        self.cached_data_by_topic = None
+        self.cached_topic = None
 
     def __init__(self, dbConnection : sqlite3.Connection, random_seed = None, logger = None):
         self.db_connection = dbConnection
@@ -60,24 +60,26 @@ class DataBroker:
         """
             Dobi in kašira novice, ki zadostujejo nekim parametrom ( start date, end date, regions list (id format ali pa ime) ). 
         """
-        self.clearAllCache()
-
         # Če so parametri kaširani in data ni none
         if params == self.cached_parameters and self.cached_data is not None:
+            self._logger("I have cached the news!")
             return self.cached_data
+        
+        self.clearAllCache()
         
         if params is None:
             params = NoviceParametri() # Brez parametrov
 
+        remaped_params = copy.deepcopy(params)
+
         # Remapi regije v id format
-        if params.regions and not all(len(r) == 5 for r in params.regions): # Če so slučajno že v id formatu
-            params.regions = {
+        if remaped_params.regions and not all(len(r) == 5 for r in params.regions): # Če so slučajno že v id formatu
+            remaped_params.regions = {
                 self.dict_of_regions[name] 
-                for name in params.regions 
+                for name in remaped_params.regions 
                 if name in self.dict_of_regions
             }
             
-        remaped_params = copy.copy(params)
 
         query = """
         SELECT 
@@ -116,16 +118,19 @@ class DataBroker:
         df['regions'] = df['regions'].apply(lambda x: x.split(', ') if x else [])
         df['tfidf'] = df['tfidf'].apply(lambda x: np.frombuffer(x, dtype=np.float64) if x else None)
         self.cached_data = df.sort_index()
-        self.cached_parameters = remaped_params
+        self.cached_parameters = copy.deepcopy(params)
     
-    def getPomembnostTopicov(self, novice_df : pd.DataFrame) -> pd.DataFrame:
+    def getPomembnostTopicov(self, novice_df : pd.DataFrame = None) -> pd.DataFrame:
         '''
             Pridobi pomembnosti topic (prešteje) za dataframe
         '''
-        if self.cached_data is None:
-            self.pridobiNovice()
+        if novice_df is None:
+            if self.cached_data is None:
+                self.pridobiNovice()
 
-        return self.cached_data['topic'].value_counts()
+            return self.cached_data['topic'].value_counts()
+        else:
+            return novice_df['topic'].value_counts()
 
     def topNnovicIzTopica(self, topics: str | set[str] | None = None, st_novic : int = 3, pridobi_pomembnosti_besed : bool = False, regression : str | None = None):
         """
@@ -197,7 +202,7 @@ class DataBroker:
             # Če rabimo samo najbolj representetive news, ne pa pomembnosti besed
             return most_representative_news
         
-        if regression is None:
+        if regression == "clustercenter":
             self._logger("Not using regression")
             centroidi = kmeans.cluster_centers_
 

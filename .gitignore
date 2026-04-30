@@ -3,3 +3,4 @@ display/node_modules
 data/mmc.yaml
 /final_data
 widgets/__pycache__
+__pycache__/datafetch.cpython-312.pyc

@@ -84,6 +84,7 @@ class DataBroker:
         query = """
         SELECT 
             n.id, 
+            n.title,
             n.content, 
             n.clean_content,
             n.topic, 
@@ -142,6 +143,13 @@ class DataBroker:
             - None       vzame sredino clusterja
             - logreg     regresija
             - logregcv   regresija z prečnim preverjanjem
+
+        vrne touple:
+        (
+            novice,
+            pomembnosti besed dict, kjer so ključi cluster id. in value seznam (beseda, pomembnost),
+            št. novic v clusterju
+        )
         """
         if self.cached_data is None:
             self._logger("Novice še niso pridobljene! Pridobil jih bom sam")
@@ -200,7 +208,7 @@ class DataBroker:
 
         if not pridobi_pomembnosti_besed:
             # Če rabimo samo najbolj representetive news, ne pa pomembnosti besed
-            return most_representative_news
+            return (most_representative_news, None)
         
         if regression == "clustercenter":
             self._logger("Not using regression")
@@ -276,7 +284,7 @@ class DataBroker:
         for cluster, features in importance_per_cluster.items():
             self._logger(f"Cluster {cluster} Top Attributes: {features}")
 
-        cluster_counts = data_in_topic['cluster_label'].value_counts().sort_index()
+        return (most_representative_news, importance_per_cluster)
 
 if __name__ == "__main__":
     connection = sqlite3.connect('final_data/novice.db') # Naredi db če še ne obstaja
@@ -289,6 +297,7 @@ if __name__ == "__main__":
 
     #broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression="logreg")
     broker.topNnovicIzTopica(pridobi_pomembnosti_besed=True, regression=None)
+    print(broker.getData())
 
 
 

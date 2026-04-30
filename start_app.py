@@ -130,6 +130,7 @@ class MainWindow(QWidget):
 
         most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, NUMBER_OF_NEWS_TO_DISPLAY, pridobi_pomembnost_besed, regession)
         self.log(most_representative_news_df)
+        print(most_representative_news_df[0])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -6,8 +6,8 @@ from PySide6.QtCore import Signal, Qt, QDate
 class SelectorWidget(QWidget):
     action_clicked = Signal() 
     date_changed = Signal(QDate, QDate)
-    topic_selected = Signal(str)  # New signal for when a topic button is clicked
-    get_news_clicked = Signal(str, str) # Signals topic name and method
+    topic_selected = Signal(str)
+    get_news_clicked = Signal(str, str)
 
     def __init__(self, min_date_str=None, max_date_str=None):
         super().__init__()
@@ -15,7 +15,6 @@ class SelectorWidget(QWidget):
         self.main_layout.setContentsMargins(5, 5, 5, 5) 
         self.main_layout.setSpacing(10)
 
-        # --- Date Selection ---
         abs_min = QDate.fromString(min_date_str, Qt.ISODate) if min_date_str else QDate(2000, 1, 1)
         abs_max = QDate.fromString(max_date_str, Qt.ISODate) if max_date_str else QDate.currentDate()
 
@@ -34,27 +33,24 @@ class SelectorWidget(QWidget):
         date_layout.addWidget(self.end_date)
         self.main_layout.addLayout(date_layout)
 
-        # --- Region Display ---
         self.display = QPlainTextEdit(readOnly=True)
         self.display.setMaximumHeight(60)
         self.main_layout.addWidget(QLabel("Selected Regions:"))
         self.main_layout.addWidget(self.display)
         
-        # --- Process Button ---
         self.btn_action = QPushButton("Process Data")
         self.btn_action.clicked.connect(self.action_clicked.emit)
         self.main_layout.addWidget(self.btn_action)
 
-        # --- Divider ---
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
         self.main_layout.addWidget(line)
 
-        # --- Radio Buttons (Methods) ---
         self.method_group = QButtonGroup(self)
         radio_layout = QHBoxLayout()
         
+        # NOTE: Če spreminjaš tu imena jih rabiš tudi drugje v kodi
         methods = [("None", True), ("clustercenter", False), ("logreg", False), ("logregcv", False)]
         for name, checked in methods:
             rb = QRadioButton(name)

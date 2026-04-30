@@ -143,7 +143,7 @@ class DataBroker:
             - logreg     regresija
             - logregcv   regresija z prečnim preverjanjem
         """
-        if self.cached_data == None:
+        if self.cached_data is None:
             self._logger("Novice še niso pridobljene! Pridobil jih bom sam")
             self.pridobiNovice()
 

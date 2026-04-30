@@ -151,7 +151,7 @@ class DataBroker:
             topics = set()
 
         if not isinstance(topics, set):
-            topics = set(topics)
+            topics = set([topics])
 
         if topics == set():
             data_in_topic = self.cached_data
@@ -184,7 +184,7 @@ class DataBroker:
         self._logger("\n--- Število novic po clusterjih ---")
         for cluster_id, count in cluster_counts.items():
             self._logger(f"Cluster {cluster_id}: {count} novic")
-        self._logger("-----------------------------------\n")
+        self._logger("-"*25)
 
         # coords = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(tfidf_data)
         # plt.figure(figsize=(10, 7))

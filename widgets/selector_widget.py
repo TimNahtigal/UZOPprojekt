@@ -7,7 +7,8 @@ class SelectorWidget(QWidget):
     action_clicked = Signal() 
     date_changed = Signal(QDate, QDate)
     topic_selected = Signal(str)
-    get_news_clicked = Signal(str, str)
+    get_news_clicked = Signal()
+    regression_selected = Signal(str)
 
     def __init__(self, min_date_str=None, max_date_str=None):
         super().__init__()
@@ -57,6 +58,7 @@ class SelectorWidget(QWidget):
             rb.setChecked(checked)
             self.method_group.addButton(rb)
             radio_layout.addWidget(rb)
+            rb.toggled.connect(lambda checked, n=name: self.handle_radio_toggle(checked, n))
         
         self.main_layout.addLayout(radio_layout)
 
@@ -103,11 +105,14 @@ class SelectorWidget(QWidget):
         self.btn_get_news.setEnabled(True)
 
     def handle_get_news(self):
-        method = self.method_group.checkedButton().text()
-        self.get_news_clicked.emit(self.selected_topic, method)
+        self.get_news_clicked.emit()
 
     def emit_range(self):
         self.date_changed.emit(self.start_date.date(), self.end_date.date())
 
     def update_display(self, names_list):
         self.display.setPlainText("\n".join(names_list))
+    
+    def handle_radio_toggle(self, is_checked, name):
+        if is_checked:
+            self.regression_selected.emit(name)

@@ -9,12 +9,14 @@ from datafetch import DataBroker, NoviceParametri
 import datetime as dt
 
 MAX_NUMBER_OF_TOPICS_DISPLAYED = 3
+NUMBER_OF_NEWS_TO_DISPLAY = 3
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.selected_regions = set()
         self.active_topic = None
+        self.active_reg = "None"
         
         # 1. New Date State
         self.current_start = QDate()
@@ -49,6 +51,7 @@ class MainWindow(QWidget):
         self.selector.action_clicked.connect(self.pridobi_topice)
         self.selector.get_news_clicked.connect(self.handle_get_news)
         self.selector.topic_selected.connect(self.handle_topic_selection)
+        self.selector.regression_selected.connect(self.handle_regression_selection)
 
     def log(self, obj):
         self.console.log(str(obj))
@@ -112,10 +115,21 @@ class MainWindow(QWidget):
         self.log(f"Active topic set to: {topic_name}")
         self.selector.set_active_topic(topic_name)
 
-    def handle_get_news(self, topic, method):
-        self.log(f"Fetching news for {topic} using {method}...")
-        self.dataBroker.topNnovicIzTopica()
-        
+    def handle_regression_selection(self, regression_name):
+        self.active_reg = regression_name
+
+    def handle_get_news(self):
+        self.log("-"*25)
+        #self.log(f"Fetching news for {self.active_topic} using {self.active_reg}...")
+        pridobi_pomembnost_besed = True
+        if self.active_reg == "None":
+            pridobi_pomembnost_besed = False
+            regession = None
+        else:
+            regession = self.active_reg
+
+        most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, NUMBER_OF_NEWS_TO_DISPLAY, pridobi_pomembnost_besed, regession)
+        self.log(most_representative_news_df)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -123,4 +137,3 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec())
 
-    

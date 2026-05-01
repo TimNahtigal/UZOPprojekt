@@ -9,8 +9,6 @@ class ConsoleWidget(QWidget):
         self.output = QTextEdit()
         self.output.setReadOnly(True)
         self.output.setStyleSheet("""
-            background-color: #1e1e1e; 
-            color: #00ff00; 
             font-family: 'Courier New';
         """)
         

@@ -7,6 +7,7 @@ from widgets.map_widget import MapWidget
 from widgets.selector_widget import SelectorWidget
 from datafetch import DataBroker, NoviceParametri
 import datetime as dt
+from qt_material import apply_stylesheet
 
 MAX_NUMBER_OF_TOPICS_DISPLAYED = 3
 NUMBER_OF_NEWS_TO_DISPLAY = 3
@@ -17,7 +18,8 @@ class MainWindow(QWidget):
         self.selected_regions = set()
         self.active_topic = None
         self.active_reg = "None"
-        
+        self.active_news_and_imporances = (None, None)
+
         # 1. New Date State
         self.current_start = QDate()
         self.current_end = QDate()
@@ -120,6 +122,7 @@ class MainWindow(QWidget):
 
     def handle_get_news(self):
         self.log("-"*25)
+        self.log("Analyzing chiter-chatter")
         #self.log(f"Fetching news for {self.active_topic} using {self.active_reg}...")
         pridobi_pomembnost_besed = True
         if self.active_reg == "None":
@@ -129,11 +132,19 @@ class MainWindow(QWidget):
             regession = self.active_reg
 
         most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, NUMBER_OF_NEWS_TO_DISPLAY, pridobi_pomembnost_besed, regession)
-        self.log(most_representative_news_df)
-        print(most_representative_news_df[0])
+        self.active_news_and_imporances = most_representative_news_df
+        self.selector.display_news(most_representative_news_df[0], most_representative_news_df[1])
+
+        self.log("Chiter-chatter fully analysed")
+        #self.log(most_representative_news_df.head(3))
+        #print(most_representative_news_df[0])
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    apply_stylesheet(app, theme='light_blue.xml', invert_secondary=True)
+    #app.setStyle("Fusion")
+    
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

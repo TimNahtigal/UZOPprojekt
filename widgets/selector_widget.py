@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPlainTextEdit, QPushButton, QDateEdit, 
                              QRadioButton, QButtonGroup, QFrame)
 from PySide6.QtCore import Signal, Qt, QDate
+from widgets.detail_window_dialog import NewsDetailWindow
 
 class SelectorWidget(QWidget):
     action_clicked = Signal() 
@@ -78,6 +79,10 @@ class SelectorWidget(QWidget):
         self.btn_get_news.clicked.connect(self.handle_get_news)
         self.main_layout.addWidget(self.btn_get_news)
 
+        self.news_layout = QVBoxLayout()
+        self.news_layout.setSpacing(10)
+        self.main_layout.addLayout(self.news_layout)
+
         self.main_layout.addStretch(1)
 
     def update_topics(self, topic_series, max_n):
@@ -116,3 +121,43 @@ class SelectorWidget(QWidget):
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:
             self.regression_selected.emit(name)
+
+    def clear_news(self):
+        while self.news_layout.count():
+            item = self.news_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+    def display_news(self, df, cluster_word_map):
+        self.clear_news()
+        
+        if cluster_word_map is None:
+            cluster_word_map = {}
+
+        for _, row in df.iterrows():
+            news_item_frame = QFrame()
+            item_layout = QVBoxLayout(news_item_frame)
+            
+            title_label = QLabel(f"<b><a href='#'>{row['title']}</a></b>")
+            title_label.setWordWrap(True)
+            
+            cluster_id = row.get('cluster_label')
+            importance_list = cluster_word_map.get(cluster_id)
+            if importance_list is None:
+                importance_list = []
+
+            title_label.linkActivated.connect( # Open new window with news
+                lambda _, r=row, imp=importance_list: self.open_detail_window(r['title'], r['content'], imp)
+            )
+
+            content_label = QLabel(str(row['content'])[:250] + "...")
+            content_label.setWordWrap(True)
+
+            item_layout.addWidget(title_label)
+            item_layout.addWidget(content_label)
+            self.news_layout.addWidget(news_item_frame)
+
+    def open_detail_window(self, title, content, importance_list):
+        self.detail_window = NewsDetailWindow(title, content, importance_list, self)
+        self.detail_window.show()

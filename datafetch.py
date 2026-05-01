@@ -220,20 +220,16 @@ class DataBroker:
             for cluster_id in range(len(centroidi)):
                 scores = centroidi[cluster_id]
                 
-                top_indices = np.argpartition(scores, -10)[-10:] # TOP 10
-                
-                top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
-
-                raw_results = [
-                    (vocab_array[idx], scores[idx]) 
-                    for idx in top_indices if scores[idx] > 0
-                ]
-                
-                if raw_results:
-                    total_score = sum(weight for word, weight in raw_results)
+                total_cluster_sum = np.sum(scores)
+                if total_cluster_sum > 0:
+                    norm_scores = scores / total_cluster_sum
+                    relevant_indices = np.where(norm_scores > 0.01)[0] # Only those that contribute more than 1%
+                    
+                    sorted_indices = relevant_indices[np.argsort(norm_scores[relevant_indices])[::-1]]
                     
                     importance_per_cluster[cluster_id] = [
-                        (word, weight / total_score) for word, weight in raw_results
+                        (vocab_array[idx], norm_scores[idx]) 
+                        for idx in sorted_indices
                     ]
                 else:
                     importance_per_cluster[cluster_id] = []
@@ -259,23 +255,25 @@ class DataBroker:
                 self._logger("Izberi regresijo!")
                 return None
             
+            # NOTE: still in regression part of if statement
             importance_per_cluster = {}
+            vocab_array = np.array(self.loaded_vocab)
+
             for i, cluster_id in enumerate(clf.classes_): 
                 coefs = clf.coef_[i]
+                abs_coefs = np.abs(coefs)
                 
-                top_indices = np.argsort(np.abs(coefs))[::-1][:10] # TOP 10
-
-                raw_results = [
-                    (self.loaded_vocab[idx], abs(coefs[idx])) 
-                    for idx in top_indices if coefs[idx] != 0
-                ]
+                total_magnitude = np.sum(abs_coefs)
                 
-                if raw_results:
-                        total_abs_score = sum(weight for _, weight in raw_results)
-                        
-                        importance_per_cluster[cluster_id] = [
-                            (word, weight / total_abs_score) for word, weight in raw_results
-                        ]
+                if total_magnitude > 0:
+                    norm_importance = abs_coefs / total_magnitude 
+                    relevant_indices = np.where(norm_importance > 0.01)[0] # only those who contribute more than 1%
+                    sorted_indices = relevant_indices[np.argsort(norm_importance[relevant_indices])[::-1]]
+                    
+                    importance_per_cluster[cluster_id] = [
+                        (vocab_array[idx], norm_importance[idx]) 
+                        for idx in sorted_indices
+                    ]
                 else:
                     importance_per_cluster[cluster_id] = []
 

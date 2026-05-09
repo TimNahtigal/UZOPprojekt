@@ -92,7 +92,7 @@ class MainWindow(QWidget):
         self.log(f"Started getting topics from {len(self.selected_regions)} regions | Period: {date_range}")
         
         # Novice od do + regije
-        self.log("Gadering the gossip")
+        self.log("Gathering the gossip")
         q_start = self.current_start
         q_end = self.current_end
         start_dt = dt.datetime(q_start.year(), q_start.month(), q_start.day())
@@ -103,7 +103,7 @@ class MainWindow(QWidget):
             regions=self.selected_regions
         )
         _ = self.dataBroker.pridobiNovice(params=params)
-        self.log("Gossip gadered")
+        self.log("Gossip gathered")
 
         self.log("Ranking the topics")
         df_topic = self.dataBroker.getPomembnostTopicov()

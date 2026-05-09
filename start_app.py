@@ -17,7 +17,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.selected_regions = set()
         self.active_topic = None
-        self.active_reg = "None"
+        self.active_reg = "auto-reg"
         self.active_news_and_imporances = (None, None)
 
         # 1. New Date State

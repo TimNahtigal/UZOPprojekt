@@ -53,7 +53,7 @@ class SelectorWidget(QWidget):
         radio_layout = QHBoxLayout()
         
         # NOTE: Če spreminjaš tu imena jih rabiš tudi drugje v kodi
-        methods = [("None", True), ("clustercenter", False), ("logreg", False), ("logregcv", False)]
+        methods = [("auto-reg", True), ("None", False), ("clustercenter", False), ("logreg", False), ("logregcv", False)] #autoreg default
         for name, checked in methods:
             rb = QRadioButton(name)
             rb.setChecked(checked)

@@ -210,6 +210,20 @@ class DataBroker:
             # Če rabimo samo najbolj representetive news, ne pa pomembnosti besed
             return (most_representative_news, None)
         
+        if regression == "auto-reg":
+            n_novic = len(data_in_topic)
+
+            if n_novic < 30: #malo
+                regression = "logregcv"
+                self._logger(f"Auto-reg: {n_novic} novic -> logregcv")
+            elif n_novic < 200: #srednje
+                regression = "logreg"
+                self._logger(f"Auto-reg: {n_novic} novic -> logreg with predefined C")
+            else:
+                regression = "logreg_sampled"
+                self._logger(f"Auto-reg: {n_novic} novic -> logreg on random sample")
+
+
         if regression == "clustercenter":
             self._logger("Not using regression")
             centroidi = kmeans.cluster_centers_
@@ -251,9 +265,27 @@ class DataBroker:
                     class_weight='balanced', # Da nima največji cluster ogromno besed, ki so common vsem
                     n_jobs=-1 # Multithreading
                 ).fit(tfidf_data, data_in_topic['cluster_label'])
+
+            elif regression == "logreg_sampled":
+                sample_size = min(200, len(data_in_topic))
+
+                sampled_data = data_in_topic.sample(
+                    n=sample_size, random_state=self.random_seed)
+
+                tfidf_sample = np.stack(sampled_data["tfidf"].values)
+                labels_sample = sampled_data["cluster_label"]
+                clf = LogisticRegression(
+                    solver='saga',
+                    penalty='l1',
+                    max_iter=2000,
+                    C=5,
+                    class_weight='balanced',
+                    n_jobs=-1
+                ).fit(tfidf_sample, labels_sample)
+
             else:
                 self._logger("Izberi regresijo!")
-                return None
+                return None       
             
             # NOTE: still in regression part of if statement
             importance_per_cluster = {}

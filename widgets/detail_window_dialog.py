@@ -1,5 +1,5 @@
 import html
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit, QTableWidgetItem, QTableWidget
 
 class NewsDetailWindow(QDialog):
     def __init__(self, title, content, word_importances, parent=None):
@@ -13,7 +13,45 @@ class NewsDetailWindow(QDialog):
         title_label.setWordWrap(True)
         layout.addWidget(title_label)
 
+        legend = QLabel("""
+        <table style="
+            border-collapse: collapse;
+            border: 1px solid #bdbdbd;
+            font-size: 12px;
+            margin-bottom: 8px;
+            background: transparent;
+        ">
+            <tr style="background:#efefef;">
+                <th style="padding:6px 10px; border:1px solid #ccc;">Intenziteta</th>
+                <th style="padding:6px 10px; border:1px solid #ccc;">Pomen</th>
+            </tr>
+
+            <tr>
+                <td style="background: rgba(255,193,7,0.25); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
+                    Nizka
+                </td>
+                <td style="padding:6px 10px; border:1px solid #ccc;">
+                    Manj pomembne besede v klasterju/članku
+                </td>
+            </tr>
+
+            <tr>
+                <td style="background: rgba(255,193,7,0.85); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
+                    Visoka
+                </td>
+                <td style="padding:6px 10px; border:1px solid #ccc;">
+                    Najpomembnejše besede v klasterju/članku
+                </td>
+            </tr>
+        </table>
+        """)
+        layout.addWidget(legend)
+
         self.text_display = QTextEdit()
+        self.text_display.setStyleSheet("""
+        QTextEdit {color: #222222;font-size: 14px;
+        line-height: 1.4;}""")
+
         self.text_display.setReadOnly(True)
         layout.addWidget(self.text_display)
 
@@ -21,23 +59,33 @@ class NewsDetailWindow(QDialog):
         self.text_display.setHtml(highlighted_html)
 
     def apply_highlighting(self, content, word_importances):
+        content = html.escape(str(content)) #ker je breakalo newline
+
         if not word_importances:
-            return content
+              return content.replace("\n", "<br><br>")
+        max_importance = max((imp for _, imp in word_importances), default=0) #normalizacija
+        if max_importance == 0:
+            return content.replace("\n", "<br><br>")
 
-        importance_map = {word.lower(): imp for word, imp in word_importances if word}
+        importance_map = {word.lower(): imp/max_importance for word, imp in word_importances if word}
         
-        words = content.split(' ')
-        html_parts = []
+        paragraphs = content.split("\n")
+        final_paragraphs = []
+        for paragraph in paragraphs:
+            words = paragraph.split(" ")
+            html_parts = []
 
-        for word in words:
-            clean_word = word.strip(".,!?:;()\"'").lower()
-            importance = importance_map.get(clean_word, 0)
+            for word in words:
+                clean_word = word.strip(".,!?:;()\"'").lower()
+                normalized = importance_map.get(clean_word, 0)
 
-            if importance and importance > 0:
-                alpha = min(int(importance * 255 * 5), 255)
-                color = f"rgba(255, 255, 0, {alpha/255:.2f})"
-                html_parts.append(f'<span style="background-color: {color};">{word}</span>')
-            else:
-                html_parts.append(word)
-
-        return " ".join(html_parts)
+                if normalized > 0:
+                    alpha = 0.20 + 0.60 * normalized
+                    color = f"rgba(255, 193, 7, {alpha:.2f})"
+                    html_parts.append(
+                        f'<span style="background-color: {color};">{word}</span>'
+                    )
+                else:
+                    html_parts.append(word)
+            final_paragraphs.append(" ".join(html_parts))
+        return "<br><br>".join(final_paragraphs)

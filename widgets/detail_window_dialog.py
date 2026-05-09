@@ -31,7 +31,7 @@ class NewsDetailWindow(QDialog):
                     Nizka
                 </td>
                 <td style="padding:6px 10px; border:1px solid #ccc;">
-                    Manj pomembne besede v klasterju/članku
+                    Manj pomembne besede v gruči/članku
                 </td>
             </tr>
 
@@ -40,7 +40,7 @@ class NewsDetailWindow(QDialog):
                     Visoka
                 </td>
                 <td style="padding:6px 10px; border:1px solid #ccc;">
-                    Najpomembnejše besede v klasterju/članku
+                    Najpomembnejše besede v gruči/članku
                 </td>
             </tr>
         </table>

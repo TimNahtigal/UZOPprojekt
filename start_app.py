@@ -131,7 +131,9 @@ class MainWindow(QWidget):
         else:
             regession = self.active_reg
 
-        most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, NUMBER_OF_NEWS_TO_DISPLAY, pridobi_pomembnost_besed, regession)
+        cluster_count = self.selector.get_cluster_count()
+        self.log(f"Using {cluster_count} clusters")
+        most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, cluster_count, pridobi_pomembnost_besed, regession)
         self.active_news_and_imporances = most_representative_news_df
         self.selector.display_news(most_representative_news_df[0], most_representative_news_df[1])
 

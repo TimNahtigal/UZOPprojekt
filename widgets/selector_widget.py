@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPlainTextEdit, QPushButton, QDateEdit, 
-                             QRadioButton, QButtonGroup, QFrame)
+                             QRadioButton, QButtonGroup, QFrame, QSpinBox)
 from PySide6.QtCore import Signal, Qt, QDate
 from widgets.detail_window_dialog import NewsDetailWindow
 
@@ -73,6 +73,16 @@ class SelectorWidget(QWidget):
         
         self.selected_topic = None
 
+        #za nastavitve gruč
+        self.cluster_count = QSpinBox()
+        self.cluster_count.setMinimum(2)
+        self.cluster_count.setMaximum(10)
+        self.cluster_count.setValue(3)
+        self.cluster_count.setEnabled(False)
+        self.main_layout.addWidget(QLabel("Število gruč:"))
+        self.main_layout.addWidget(self.cluster_count)
+
+
         # --- Get News Button ---
         self.btn_get_news = QPushButton("Get News")
         self.btn_get_news.setEnabled(False)
@@ -117,10 +127,18 @@ class SelectorWidget(QWidget):
 
     def update_display(self, names_list):
         self.display.setPlainText("\n".join(names_list))
+
+    def get_cluster_count(self):
+        return self.cluster_count.value()
     
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:
             self.regression_selected.emit(name)
+
+            if name == "None":
+                self.cluster_count.setEnabled(False)
+            else:
+                self.cluster_count.setEnabled(True)
 
     def clear_news(self):
         while self.news_layout.count():

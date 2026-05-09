@@ -12,6 +12,9 @@ from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+
+from sklearn.metrics import silhouette_score
+
 # Support functions
 def getDictOfRegions():
     df = pd.read_csv('final_data/regijeid.csv')
@@ -174,6 +177,15 @@ class DataBroker:
         data_in_topic["cluster_label"] = kmeans.fit_predict(tfidf_data)
         
         self._logger("Made clusters")
+
+        cluster_score = None
+
+        if len(data_in_topic) > st_novic and len(set(data_in_topic["cluster_label"])) > 1:
+            cluster_score = silhouette_score(tfidf_data, data_in_topic["cluster_label"],
+                metric="cosine" )
+            self._logger(f"Cluster quality score (silhouette): {cluster_score:.3f}")
+        else:
+            self._logger("Cluster quality score not available.")
 
         # Najde sredine clusterjev
         centroidi = kmeans.cluster_centers_

@@ -10,6 +10,7 @@ class SelectorWidget(QWidget):
     topic_selected = Signal(str)
     get_news_clicked = Signal()
     regression_selected = Signal(str)
+    auto_cluster_clicked = Signal()
 
     def __init__(self, min_date_str=None, max_date_str=None):
         super().__init__()
@@ -78,9 +79,22 @@ class SelectorWidget(QWidget):
         self.cluster_count.setMinimum(2)
         self.cluster_count.setMaximum(10)
         self.cluster_count.setValue(3)
-        self.cluster_count.setEnabled(False)
-        self.main_layout.addWidget(QLabel("Število gruč:"))
-        self.main_layout.addWidget(self.cluster_count)
+        self.cluster_count.setEnabled(True)
+
+        cluster_layout = QHBoxLayout()
+
+        cluster_layout.addWidget(QLabel("Število gruč:"))
+        cluster_layout.addWidget(self.cluster_count)
+
+        self.btn_auto_clusters = QPushButton("Auto")
+        self.btn_auto_clusters.setEnabled(False)
+        self.btn_auto_clusters.clicked.connect(self.auto_cluster_clicked.emit)
+        cluster_layout.addWidget(self.btn_auto_clusters)
+
+        self.main_layout.addLayout(cluster_layout)
+
+        self.silhouette_label = QLabel("Silhouette score: -")
+        self.main_layout.addWidget(self.silhouette_label)
 
 
         # --- Get News Button ---
@@ -134,11 +148,7 @@ class SelectorWidget(QWidget):
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:
             self.regression_selected.emit(name)
-
-            if name == "None":
-                self.cluster_count.setEnabled(False)
-            else:
-                self.cluster_count.setEnabled(True)
+            self.cluster_count.setEnabled(True)
 
     def clear_news(self):
         while self.news_layout.count():
@@ -146,6 +156,12 @@ class SelectorWidget(QWidget):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
+
+    def set_silhouette_score(self, score):
+        if score is None:
+            self.silhouette_label.setText("Silhouette score: ni na voljo")
+        else:
+            self.silhouette_label.setText(f"Silhouette score: {score:.3f}")
 
     def display_news(self, df, cluster_word_map):
         self.clear_news()

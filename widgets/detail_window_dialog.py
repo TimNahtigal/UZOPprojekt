@@ -1,5 +1,6 @@
 import html
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit, QTableWidgetItem, QTableWidget
+import re
 
 class NewsDetailWindow(QDialog):
     def __init__(self, title, content, word_importances, parent=None):
@@ -36,7 +37,7 @@ class NewsDetailWindow(QDialog):
             </tr>
 
             <tr>
-                <td style="background: rgba(255,193,7,0.85); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
+                <td style="background: rgba(255,193,7,1.0); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
                     Visoka
                 </td>
                 <td style="padding:6px 10px; border:1px solid #ccc;">
@@ -76,11 +77,14 @@ class NewsDetailWindow(QDialog):
             html_parts = []
 
             for word in words:
-                clean_word = word.strip(".,!?:;()\"'").lower()
+                clean_word = "".join(
+                    c.lower() for c in word
+                    if c.isalpha() or c in "čšžćđ-"
+                )
                 normalized = importance_map.get(clean_word, 0)
 
                 if normalized > 0:
-                    alpha = 0.20 + 0.60 * normalized
+                    alpha = 0.20 + 0.80 * normalized
                     color = f"rgba(255, 193, 7, {alpha:.2f})"
                     html_parts.append(
                         f'<span style="background-color: {color};">{word}</span>'

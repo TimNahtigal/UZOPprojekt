@@ -55,6 +55,8 @@ class MainWindow(QWidget):
         self.selector.topic_selected.connect(self.handle_topic_selection)
         self.selector.regression_selected.connect(self.handle_regression_selection)
 
+        self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
+
     def log(self, obj):
         self.console.log(str(obj))
 
@@ -135,11 +137,25 @@ class MainWindow(QWidget):
         self.log(f"Using {cluster_count} clusters")
         most_representative_news_df = self.dataBroker.topNnovicIzTopica(self.active_topic, cluster_count, pridobi_pomembnost_besed, regession)
         self.active_news_and_imporances = most_representative_news_df
+        self.selector.set_silhouette_score(most_representative_news_df[2])
         self.selector.display_news(most_representative_news_df[0], most_representative_news_df[1])
 
         self.log("Chiter-chatter fully analysed")
         #self.log(most_representative_news_df.head(3))
         #print(most_representative_news_df[0])
+
+    def handle_auto_cluster(self):
+        if self.active_topic is None:
+            self.log("Najprej izberi topic.")
+            return
+
+        self.log("Automatically choosing number of clusters...")
+        best_k, score = self.dataBroker.chooseOptimalnoSteviloGruc(self.active_topic, min_k=2, max_k=10)
+        self.selector.cluster_count.setValue(best_k)
+        self.selector.set_silhouette_score(score)
+        
+        self.handle_get_news()
+        self.log(f"Auto selected {best_k} clusters.")
 
 
 if __name__ == "__main__":

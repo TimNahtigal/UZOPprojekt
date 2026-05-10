@@ -12,6 +12,7 @@ from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import normalize
 
 from sklearn.metrics import silhouette_score
 
@@ -220,7 +221,7 @@ class DataBroker:
 
         if not pridobi_pomembnosti_besed:
             # Če rabimo samo najbolj representetive news, ne pa pomembnosti besed
-            return (most_representative_news, None)
+            return (most_representative_news, None, cluster_score)
         
         if regression == "auto-reg":
             n_novic = len(data_in_topic)
@@ -326,7 +327,45 @@ class DataBroker:
         for cluster, features in importance_per_cluster.items():
             self._logger(f"Cluster {cluster} Top Attributes: {features}")
 
-        return (most_representative_news, importance_per_cluster)
+        return (most_representative_news, importance_per_cluster, cluster_score)
+    
+    def chooseOptimalnoSteviloGruc(self, topics=None, min_k=2, max_k=10):
+        if self.cached_data is None:
+            self.pridobiNovice()
+
+        if topics is None:
+            topics = set()
+
+        if not isinstance(topics, set):
+            topics = set([topics])
+
+        if topics == set():
+            data_in_topic = self.cached_data
+        else:
+            data_in_topic = self.cached_data[self.cached_data["topic"].isin(topics)]
+
+        if len(data_in_topic) <= min_k:
+            return len(data_in_topic), None
+
+        tfidf_data = np.stack(data_in_topic["tfidf"].values)
+
+        max_k = min(max_k, len(data_in_topic) - 1)
+        best_k = min_k
+        best_score = -1
+
+        for k in range(min_k, max_k + 1):
+            kmeans = KMeans(n_clusters=k, random_state=self.random_seed, 
+                        init="k-means++", n_init=10)
+            labels = kmeans.fit_predict(tfidf_data)
+            score = silhouette_score(tfidf_data, labels, metric="euclidean") #zato ker tf-idf uporablja evklidsko
+            
+            self._logger(f"K={k}, Silhouette Score: {score:.4f}")
+            
+            if score > best_score:
+                best_score = score
+                best_k = k
+
+        return best_k, best_score
 
 if __name__ == "__main__":
     connection = sqlite3.connect('final_data/novice.db') # Naredi db če še ne obstaja

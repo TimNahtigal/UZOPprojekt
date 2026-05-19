@@ -20,7 +20,7 @@ class MainWindow(QWidget):
         self.active_reg = "auto-reg"
         self.active_news_and_imporances = (None, None)
 
-        # 1. New Date State
+        # Date State
         self.current_start = QDate()
         self.current_end = QDate()
         
@@ -54,7 +54,6 @@ class MainWindow(QWidget):
         self.selector.get_news_clicked.connect(self.handle_get_news)
         self.selector.topic_selected.connect(self.handle_topic_selection)
         self.selector.regression_selected.connect(self.handle_regression_selection)
-
         self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
 
     def log(self, obj):
@@ -101,7 +100,6 @@ class MainWindow(QWidget):
             self.log(f"-"*25)
             self.log(f"Started getting topics from {len(self.selected_regions)} regions | Period: {date_range}")
             
-            # Novice od do + regije
             self.log("Gathering the gossip")
             q_start = self.current_start
             q_end = self.current_end
@@ -119,9 +117,14 @@ class MainWindow(QWidget):
             df_topic = self.dataBroker.getPomembnostTopicov()
             self.log(str(df_topic.head()))
 
-            self.selector.update_topics(df_topic, MAX_NUMBER_OF_TOPICS_DISPLAYED)
-            self.selector.set_status("Pripravljeno. Izberi topic in klikni GET NEWS.")
-            self.log(f"Displayed top {MAX_NUMBER_OF_TOPICS_DISPLAYED} topics.")
+            self.selector.update_topics(df_topic, len(df_topic))
+            
+            if self.selector.topic_dropdown.count() > 1:
+                self.selector.set_status("Pripravljeno. Izberi topic in klikni GET NEWS.")
+            else:
+                self.selector.set_status("Ni najdenih tem z novicami za izbrano obdobje.")
+                
+            self.log("Displayed formatted topics in dropdown selection window.")
         
         except Exception as e:
             self.selector.set_status(f"Napaka pri procesiranju: {e}")
@@ -147,21 +150,39 @@ class MainWindow(QWidget):
             return
         self.log("-" * 25)
         self.log("Analyzing chiter-chatter")
-        if self.active_reg == "None":
+
+        # --- FEATURE UPDATE: Cap cluster counts and articles automatically ---
+        total_news_available = self.selector.topic_counts.get(self.active_topic, 0)
+        cluster_count = self.selector.get_cluster_count()
+        article_count = self.selector.get_article_count()
+
+        # Enforce that (cluster_count * article_count) <= total_news_available
+        if total_news_available > 0 and (cluster_count * article_count) > total_news_available:
+            self.log(f"Requested configuration ({cluster_count}x{article_count}) exceeds total available news ({total_news_available}). Auto-adjusting...")
+            if total_news_available == 1:
+                cluster_count = 1
+                article_count = 1
+            else:
+                # Keep requested clusters if possible, reduce articles per cluster
+                cluster_count = min(cluster_count, total_news_available)
+                article_count = max(1, total_news_available // cluster_count)
+            
+            # Sync back values visually into the UI widgets
+            self.selector.cluster_count.setValue(cluster_count)
+            self.selector.article_count.setValue(article_count)
+
+        if total_news_available <= 1 or self.active_reg == "None":
             pridobi_pomembnost_besed = False
             regression = None
         else:
             pridobi_pomembnost_besed = True
             regression = self.active_reg
 
-        cluster_count = self.selector.get_cluster_count()
-        article_count = self.selector.get_article_count()
-
         self.log(f"Using {cluster_count} clusters")
         self.log(f"Showing {article_count} articles per cluster")
 
         result = self.dataBroker.topNnovicIzTopica(topics=self.active_topic, st_gruc=cluster_count, st_clankov_na_gruco=article_count,
-                                                pridobi_pomembnosti_besed=pridobi_pomembnost_besed, regression=regression )
+                                                 pridobi_pomembnosti_besed=pridobi_pomembnost_besed, regression=regression )
 
         if result is None:
             self.log("Ni rezultata.")
@@ -173,29 +194,37 @@ class MainWindow(QWidget):
         self.selector.display_news(novice_df, importance_map)
 
         self.log("Chiter-chatter fully analysed")
-            #self.log(most_representative_news_df.head(3))
-        #print(most_representative_news_df[0])
 
     def handle_auto_cluster(self):
         if self.active_topic is None:
             self.log("Najprej izberi topic.")
             return
 
+        total_news_available = self.selector.topic_counts.get(self.active_topic, 0)
+        if total_news_available <= 1:
+            self.log("Not enough news to run auto clustering.")
+            return
+
         self.log("Automatically choosing number of clusters...")
-        best_k, score = self.dataBroker.chooseOptimalnoSteviloGruc(self.active_topic, min_k=2, max_k=10)
+        # Cap max evaluation search grid by total available articles safely
+        max_search_k = min(10, total_news_available)
+        min_search_k = min(2, max_search_k)
+
+        if min_search_k == max_search_k:
+            best_k, score = min_search_k, 0.0
+        else:
+            best_k, score = self.dataBroker.chooseOptimalnoSteviloGruc(self.active_topic, min_k=min_search_k, max_k=max_search_k)
+            
         self.selector.cluster_count.setValue(best_k)
         self.selector.set_silhouette_score(score)
         
         self.handle_get_news()
         self.log(f"Auto selected {best_k} clusters.")
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     apply_stylesheet(app, theme='light_blue.xml', invert_secondary=True)
-    #app.setStyle("Fusion")
     
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-

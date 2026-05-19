@@ -1,3 +1,4 @@
+import re
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPlainTextEdit, QPushButton, QDateEdit, 
                              QRadioButton, QButtonGroup, QFrame, QSpinBox,
@@ -15,9 +16,28 @@ class SelectorWidget(QWidget):
 
     def __init__(self, min_date_str=None, max_date_str=None):
         super().__init__()
-        self.main_layout = QVBoxLayout(self)
+        self.selected_topic = None
+        self.topic_counts = {}  # Tracks article counts per topic string mapping
+        
+        self.setFixedWidth(500)
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0) 
+        
+        main_scroll = QScrollArea(self)
+        main_scroll.setWidgetResizable(True)
+        main_scroll.setFrameShape(QFrame.NoFrame) 
+
+        main_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        main_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
+        scroll_content = QWidget()
+        main_scroll.setWidget(scroll_content)
+        
+        self.main_layout = QVBoxLayout(scroll_content)
         self.main_layout.setContentsMargins(5, 5, 5, 5) 
         self.main_layout.setSpacing(10)
+        
+        outer_layout.addWidget(main_scroll)
 
         abs_min = QDate.fromString(min_date_str, Qt.ISODate) if min_date_str else QDate(2000, 1, 1)
         abs_max = QDate.fromString(max_date_str, Qt.ISODate) if max_date_str else QDate.currentDate()
@@ -36,6 +56,7 @@ class SelectorWidget(QWidget):
         date_layout.addWidget(QLabel("To:"))
         date_layout.addWidget(self.end_date)
         self.main_layout.addLayout(date_layout)
+        date_layout.addStretch(1)
 
         self.display = QPlainTextEdit(readOnly=True)
         self.display.setMaximumHeight(60)
@@ -53,20 +74,6 @@ class SelectorWidget(QWidget):
         line.setFrameShadow(QFrame.Sunken)
         self.main_layout.addWidget(line)
 
-        self.method_group = QButtonGroup(self)
-        radio_layout = QHBoxLayout()
-        
-        # NOTE: Če spreminjaš tu imena jih rabiš tudi drugje v kodi
-        methods = [("auto-reg", True), ("None", False), ("clustercenter", False), ("logreg", False), ("logregcv", False)] #autoreg default
-        for name, checked in methods:
-            rb = QRadioButton(name)
-            rb.setChecked(checked)
-            self.method_group.addButton(rb)
-            radio_layout.addWidget(rb)
-            rb.toggled.connect(lambda checked, n=name: self.handle_radio_toggle(checked, n))
-        
-        self.main_layout.addLayout(radio_layout)
-
         # --- Dynamic Topics Area ---
         self.topic_label = QLabel("Top Topics:")
         self.main_layout.addWidget(self.topic_label)
@@ -74,22 +81,14 @@ class SelectorWidget(QWidget):
         self.topic_dropdown = QComboBox()
         self.topic_dropdown.activated.connect(self.handle_dropdown_topic)
         self.main_layout.addWidget(self.topic_dropdown)
-        
-        self.topic_container = QVBoxLayout()
-        self.topic_container.setSpacing(2)
-        self.main_layout.addLayout(self.topic_container)
-        
-        self.selected_topic = None
 
-        #za nastavitve gruč
         self.cluster_count = QSpinBox()
-        self.cluster_count.setMinimum(2)
+        self.cluster_count.setMinimum(1)
         self.cluster_count.setMaximum(10)
         self.cluster_count.setValue(3)
         self.cluster_count.setEnabled(True)
 
         cluster_layout = QHBoxLayout()
-
         cluster_layout.addWidget(QLabel("Število gruč:"))
         cluster_layout.addWidget(self.cluster_count)
 
@@ -108,19 +107,31 @@ class SelectorWidget(QWidget):
 
         self.main_layout.addLayout(cluster_layout)
 
+        # --- Radio Buttons Layout ---
+        self.method_group = QButtonGroup(self)
+        self.radio_buttons = []
+        radio_layout = QHBoxLayout()
+        
+        methods = [("auto-reg", True), ("None", False), ("clustercenter", False), ("logreg", False), ("logregcv", False)] 
+        for name, checked in methods:
+            rb = QRadioButton(name)
+            rb.setChecked(checked)
+            self.method_group.addButton(rb)
+            radio_layout.addWidget(rb)
+            self.radio_buttons.append(rb)
+            rb.toggled.connect(lambda checked, n=name: self.handle_radio_toggle(checked, n))
+        
+        self.main_layout.addLayout(radio_layout)
+
         self.silhouette_label = QLabel("Silhouette score: -")
         self.main_layout.addWidget(self.silhouette_label)
 
-
-        # --- Get News Button ---
         self.btn_get_news = QPushButton("Get News")
         self.btn_get_news.setEnabled(False)
         self.btn_get_news.clicked.connect(self.handle_get_news)
         self.main_layout.addWidget(self.btn_get_news)
 
-        # --- Scrollable news---
         self.news_container = QWidget()
-
         self.news_layout = QVBoxLayout(self.news_container)
         self.news_layout.setSpacing(10)
 
@@ -130,41 +141,66 @@ class SelectorWidget(QWidget):
         self.news_scroll.setMinimumHeight(400)
 
         self.main_layout.addWidget(self.news_scroll)
-
         self.main_layout.addStretch(1)
 
     def update_topics(self, topic_series, max_n):
-        self.clear_topics() # Clean start
+        self.clear_topics() 
+        self.topic_counts = topic_series.to_dict()
         
-        #top_topics = topic_series.head(max_n).index.tolist()
         all_topics = topic_series.index.tolist()
         self.topic_dropdown.clear()
-        self.topic_dropdown.addItem("Izberi topic ...")
-        self.topic_dropdown.addItems(all_topics)
-        top_topics = all_topics[:max_n]
+        
+        self.topic_dropdown.addItem("Izberi topic ...", None)
+        
+        for topic in all_topics:
+            if topic_series[topic] <= 0:
+                continue
 
-        for topic in top_topics:
-            btn = QPushButton(topic)
-            btn.setCheckable(True)
-            btn.setAutoExclusive(True)
-
-            btn.clicked.connect(lambda chk, t=topic: self.topic_selected.emit(t))
-            self.topic_container.addWidget(btn)
+            clean_name = topic.replace("_", " ").replace("-", " ")
+            clean_name = re.sub(r'[^\w\s]', '', clean_name)
+            clean_name = clean_name.strip().capitalize()
+            
+            self.topic_dropdown.addItem(f"{clean_name} ({int(topic_series[topic])})", topic)
 
     def clear_topics(self):
         self.selected_topic = None
+        self.topic_counts = {}
         self.btn_get_news.setEnabled(False)
+        self.btn_auto_clusters.setEnabled(False)
         self.topic_dropdown.clear()
-        while self.topic_container.count():
-            child = self.topic_container.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
         
-
     def set_active_topic(self, topic_name):
+        if topic_name is None:
+            self.selected_topic = None
+            self.btn_get_news.setEnabled(False)
+            self.btn_auto_clusters.setEnabled(False)
+            self._toggle_regression_controls(True)
+            return
+
         self.selected_topic = topic_name
         self.btn_get_news.setEnabled(True)
-        self.btn_auto_clusters.setEnabled(True)
+        
+        # Check total actual available articles for the newly targeted topic
+        num_news = self.topic_counts.get(topic_name, 0)
+        if num_news <= 1:
+            self.btn_auto_clusters.setEnabled(False)
+            self.cluster_count.setValue(1)
+            self.cluster_count.setEnabled(False)
+            self._toggle_regression_controls(False)
+        else:
+            self.btn_auto_clusters.setEnabled(True)
+            self.cluster_count.setEnabled(True)
+            self._toggle_regression_controls(True)
+
+        for idx in range(self.topic_dropdown.count()):
+            if self.topic_dropdown.itemData(idx, Qt.UserRole) == topic_name:
+                self.topic_dropdown.setCurrentIndex(idx)
+                break
+
+    def _toggle_regression_controls(self, enabled):
+        """Helper to enable or disable all regression method selection choices."""
+        for rb in self.radio_buttons:
+            rb.setEnabled(enabled)
 
     def handle_get_news(self):
         self.get_news_clicked.emit()
@@ -182,15 +218,16 @@ class SelectorWidget(QWidget):
         return self.article_count.value()
     
     def handle_dropdown_topic(self, index):
-        topic_name = self.topic_dropdown.itemText(index)
-        if not topic_name or topic_name == "Izberi topic ...":
+        self.clear_news()
+        raw_topic_name = self.topic_dropdown.itemData(index, Qt.UserRole)
+        if not raw_topic_name:
+            self.set_active_topic(None)
             return
-        self.topic_selected.emit(topic_name)
+        self.topic_selected.emit(raw_topic_name)
     
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:
             self.regression_selected.emit(name)
-            self.cluster_count.setEnabled(True)
 
     def clear_news(self):
         while self.news_layout.count():
@@ -211,85 +248,51 @@ class SelectorWidget(QWidget):
     def set_controls_enabled(self, enabled):
         self.btn_action.setEnabled(enabled)
         self.btn_get_news.setEnabled(enabled and self.selected_topic is not None)
-        self.cluster_count.setEnabled(enabled)
-        self.btn_auto_clusters.setEnabled(enabled and self.selected_topic is not None)
+        
+        num_news = self.topic_counts.get(self.selected_topic, 0) if self.selected_topic else 0
+        if num_news > 1:
+            self.cluster_count.setEnabled(enabled)
+            self.btn_auto_clusters.setEnabled(enabled and self.selected_topic is not None)
+            self._toggle_regression_controls(enabled)
+        else:
+            self.cluster_count.setEnabled(False)
+            self.btn_auto_clusters.setEnabled(False)
+            self._toggle_regression_controls(False)
 
     def display_news(self, df, cluster_word_map):
         self.clear_news()
+        if df is None or df.empty:
+            return
 
         if cluster_word_map is None:
             cluster_word_map = {}
 
         grouped = df.groupby("cluster_label")
-
         for cluster_id, cluster_df in grouped:
-
             cluster_size = cluster_df.iloc[0].get("cluster_size", "?")
-
-            cluster_header = QLabel(
-                f"<h3>Gruča {cluster_id +1} "
-                f"(št. člankov: {cluster_size})</h3>"
-            )
-
+            cluster_header = QLabel(f"<h3>Gruča {cluster_id + 1} (št. člankov: {cluster_size})</h3>")
             self.news_layout.addWidget(cluster_header)
 
             for _, row in cluster_df.iterrows():
-
                 news_item_frame = QFrame()
                 news_item_frame.setFrameShape(QFrame.StyledPanel)
-
                 item_layout = QVBoxLayout(news_item_frame)
 
-                title_label = QLabel(
-                    f"<b><a href='#'>{row['title']}</a></b>"
-                )
-
+                title_label = QLabel(f"<b><a href='#'>{row['title']}</a></b>")
                 title_label.setWordWrap(True)
 
                 importance_list = cluster_word_map.get(cluster_id, [])
-
                 title_label.linkActivated.connect(
-                    lambda _, r=row, imp=importance_list:
-                    self.open_detail_window(
-                        r['title'],
-                        r['content'],
-                        imp
-                    )
+                    lambda _, r=row, imp=importance_list: self.open_detail_window(r['title'], r['content'], imp)
                 )
 
                 content_preview = str(row['content'])[:250] + "..."
-
                 content_label = QLabel(content_preview)
                 content_label.setWordWrap(True)
 
                 item_layout.addWidget(title_label)
                 item_layout.addWidget(content_label)
-
                 self.news_layout.addWidget(news_item_frame)
-
-        """
-        for _, row in df.iterrows():
-            news_item_frame = QFrame()
-            item_layout = QVBoxLayout(news_item_frame)
-            
-            title_label = QLabel(f"<b><a href='#'>{row['title']}</a></b>")
-            title_label.setWordWrap(True)
-            
-            cluster_id = row.get('cluster_label')
-            importance_list = cluster_word_map.get(cluster_id)
-            if importance_list is None:
-                importance_list = []
-
-            title_label.linkActivated.connect( # Open new window with news
-                lambda _, r=row, imp=importance_list: self.open_detail_window(r['title'], r['content'], imp)
-            )
-
-            content_label = QLabel(str(row['content'])[:250] + "...")
-            content_label.setWordWrap(True)
-
-            item_layout.addWidget(title_label)
-            item_layout.addWidget(content_label)
-            self.news_layout.addWidget(news_item_frame)"""
 
     def open_detail_window(self, title, content, importance_list):
         self.detail_window = NewsDetailWindow(title, content, importance_list, self)

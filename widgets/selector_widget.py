@@ -168,28 +168,39 @@ class SelectorWidget(QWidget):
         self.btn_get_news.setEnabled(False)
         self.btn_auto_clusters.setEnabled(False)
         self.topic_dropdown.clear()
+        self.cluster_count.setMaximum(10)  # Reset to fallback maximum
+        self.set_silhouette_score("-")     # Clear score tracking fields
         
     def set_active_topic(self, topic_name):
         if topic_name is None:
             self.selected_topic = None
             self.btn_get_news.setEnabled(False)
             self.btn_auto_clusters.setEnabled(False)
+            self.cluster_count.setMaximum(10)  # Reset default maximum
             self._toggle_regression_controls(True)
             return
 
         self.selected_topic = topic_name
         self.btn_get_news.setEnabled(True)
         
-        # Check total actual available articles for the newly targeted topic
         num_news = self.topic_counts.get(topic_name, 0)
+        
         if num_news <= 1:
             self.btn_auto_clusters.setEnabled(False)
+            self.cluster_count.setMaximum(1)
             self.cluster_count.setValue(1)
             self.cluster_count.setEnabled(False)
             self._toggle_regression_controls(False)
         else:
             self.btn_auto_clusters.setEnabled(True)
             self.cluster_count.setEnabled(True)
+            # Cap the max clusters dynamically so it cannot exceed the article count
+            self.cluster_count.setMaximum(num_news)
+            
+            # Adjust value downward if the previous selection is now out-of-bounds
+            if self.cluster_count.value() > num_news:
+                self.cluster_count.setValue(num_news)
+                
             self._toggle_regression_controls(True)
 
         for idx in range(self.topic_dropdown.count()):
@@ -198,11 +209,28 @@ class SelectorWidget(QWidget):
                 break
 
     def _toggle_regression_controls(self, enabled):
-        """Helper to enable or disable all regression method selection choices."""
+        """Helper to manage regression options depending on topic news counts."""
+        num_news = self.topic_counts.get(self.selected_topic, 0) if self.selected_topic else 0
+        
         for rb in self.radio_buttons:
-            rb.setEnabled(enabled)
+            if not enabled:
+                rb.setEnabled(False)
+            else:
+                # If total news is less than 5, specifically isolate and disable logregcv
+                if rb.text() == "logregcv" and num_news < 5:
+                    rb.setEnabled(False)
+                    # If logregcv was previously selected, automatically reset back to auto-reg safely
+                    if rb.isChecked():
+                        for fallback_rb in self.radio_buttons:
+                            if fallback_rb.text() == "auto-reg":
+                                fallback_rb.setChecked(True)
+                                break
+                else:
+                    rb.setEnabled(True)
 
     def handle_get_news(self):
+        # Clear/Reset visual layout metrics display text immediately when clicked
+        self.set_silhouette_score("-")
         self.get_news_clicked.emit()
 
     def emit_range(self):

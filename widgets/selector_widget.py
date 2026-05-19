@@ -164,6 +164,7 @@ class SelectorWidget(QWidget):
     def set_active_topic(self, topic_name):
         self.selected_topic = topic_name
         self.btn_get_news.setEnabled(True)
+        self.btn_auto_clusters.setEnabled(True)
 
     def handle_get_news(self):
         self.get_news_clicked.emit()
@@ -182,7 +183,7 @@ class SelectorWidget(QWidget):
     
     def handle_dropdown_topic(self, index):
         topic_name = self.topic_dropdown.itemText(index)
-        if topic_name or topic_name == "Izberi topic ...":
+        if not topic_name or topic_name == "Izberi topic ...":
             return
         self.topic_selected.emit(topic_name)
     
@@ -211,9 +212,7 @@ class SelectorWidget(QWidget):
         self.btn_action.setEnabled(enabled)
         self.btn_get_news.setEnabled(enabled and self.selected_topic is not None)
         self.cluster_count.setEnabled(enabled)
-        self.btn_auto_clusters.setEnabled(False)
-        self.start_date.setEnabled(enabled)
-        self.end_date.setEnabled(enabled)
+        self.btn_auto_clusters.setEnabled(enabled and self.selected_topic is not None)
 
     def display_news(self, df, cluster_word_map):
         self.clear_news()

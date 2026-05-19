@@ -136,8 +136,8 @@ class DataBroker:
             return self.cached_data['topic'].value_counts()
         else:
             return novice_df['topic'].value_counts()
-
-    def topNnovicIzTopica(self, topics: str | set[str] | None = None, st_novic : int = 3, pridobi_pomembnosti_besed : bool = False, regression : str | None = None):
+        
+    def topNnovicIzTopica(self, topics: str | set[str] | None = None, st_gruc: int = 3, st_clankov_na_gruco: int = 3, pridobi_pomembnosti_besed: bool = False, regression: str | None = None):
         """
         Pridobi top novice iz podnega topica. 
         Topici so lahko podani kot string ali set.
@@ -174,14 +174,14 @@ class DataBroker:
         
         # Naredi clusterje
         tfidf_data = np.stack(data_in_topic["tfidf"].values)
-        kmeans = KMeans(n_clusters=st_novic, random_state=self.random_seed, init='k-means++', n_init=20)
+        kmeans = KMeans(n_clusters=st_gruc, random_state=self.random_seed, init='k-means++', n_init=20)
         data_in_topic["cluster_label"] = kmeans.fit_predict(tfidf_data)
         
         self._logger("Made clusters")
 
         cluster_score = None
 
-        if len(data_in_topic) > st_novic and len(set(data_in_topic["cluster_label"])) > 1:
+        if len(data_in_topic) > st_gruc and len(set(data_in_topic["cluster_label"])) > 1:
             cluster_score = silhouette_score(tfidf_data, data_in_topic["cluster_label"],
                 metric="cosine" )
             self._logger(f"Cluster quality score (silhouette): {cluster_score:.3f}")
@@ -190,8 +190,33 @@ class DataBroker:
 
         # Najde sredine clusterjev
         centroidi = kmeans.cluster_centers_
-        closest_indices, _ = pairwise_distances_argmin_min(centroidi, tfidf_data)
-        most_representative_news = data_in_topic.iloc[closest_indices]
+        rows = []
+
+        for cluster_id in range(st_gruc):
+            cluster_mask = data_in_topic["cluster_label"] == cluster_id
+            cluster_df = data_in_topic[cluster_mask].copy()
+
+            if cluster_df.empty:
+                continue
+
+            cluster_vectors = np.stack(cluster_df["tfidf"].values)
+            centroid = centroidi[cluster_id].reshape(1, -1)
+
+            _, distances = pairwise_distances_argmin_min(cluster_vectors, centroid)
+
+            cluster_df["distance_to_centroid"] = distances
+            cluster_df["cluster_size"] = len(cluster_df)
+
+            rows.append(
+                cluster_df.sort_values("distance_to_centroid")
+                .head(st_clankov_na_gruco)
+            )
+
+        most_representative_news = pd.concat(rows)
+        most_representative_news = most_representative_news.sort_values(
+            by=["cluster_size", "cluster_label", "distance_to_centroid"],
+            ascending=[False, True, True]
+        )
         #self._logger(most_representative_news)
         self._logger("Found cluster centers")
 

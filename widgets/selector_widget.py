@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPlainTextEdit, QPushButton, QDateEdit, 
-                             QRadioButton, QButtonGroup, QFrame, QSpinBox)
+                             QRadioButton, QButtonGroup, QFrame, QSpinBox,
+                             QComboBox)
 from PySide6.QtCore import Signal, Qt, QDate
 from widgets.detail_window_dialog import NewsDetailWindow
 
@@ -69,6 +70,10 @@ class SelectorWidget(QWidget):
         # --- Dynamic Topics Area ---
         self.topic_label = QLabel("Top Topics:")
         self.main_layout.addWidget(self.topic_label)
+
+        self.topic_dropdown = QComboBox()
+        self.topic_dropdown.activated.connect(self.handle_dropdown_topic)
+        self.main_layout.addWidget(self.topic_dropdown)
         
         self.topic_container = QVBoxLayout()
         self.topic_container.setSpacing(2)
@@ -114,7 +119,13 @@ class SelectorWidget(QWidget):
     def update_topics(self, topic_series, max_n):
         self.clear_topics() # Clean start
         
-        top_topics = topic_series.head(max_n).index.tolist()
+        #top_topics = topic_series.head(max_n).index.tolist()
+        all_topics = topic_series.index.tolist()
+        self.topic_dropdown.clear()
+        self.topic_dropdown.addItem("Izberi topic ...")
+        self.topic_dropdown.addItems(all_topics)
+        top_topics = all_topics[:max_n]
+
         for topic in top_topics:
             btn = QPushButton(topic)
             btn.setCheckable(True)
@@ -126,10 +137,12 @@ class SelectorWidget(QWidget):
     def clear_topics(self):
         self.selected_topic = None
         self.btn_get_news.setEnabled(False)
+        self.topic_dropdown.clear()
         while self.topic_container.count():
             child = self.topic_container.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
+        
 
     def set_active_topic(self, topic_name):
         self.selected_topic = topic_name
@@ -146,6 +159,11 @@ class SelectorWidget(QWidget):
 
     def get_cluster_count(self):
         return self.cluster_count.value()
+    
+    def handle_dropdown_topic(self, index):
+        topic_name = self.topic_dropdown.itemText(index)
+        if topic_name or topic_name == "Izberi topic ...":
+            self.topic_selected.emit(topic_name)
     
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:

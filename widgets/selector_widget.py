@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPlainTextEdit, QPushButton, QDateEdit, 
                              QRadioButton, QButtonGroup, QFrame, QSpinBox,
-                             QComboBox)
+                             QComboBox, QScrollArea)
 from PySide6.QtCore import Signal, Qt, QDate
 from widgets.detail_window_dialog import NewsDetailWindow
 
@@ -93,6 +93,14 @@ class SelectorWidget(QWidget):
         cluster_layout.addWidget(QLabel("Število gruč:"))
         cluster_layout.addWidget(self.cluster_count)
 
+        self.article_count = QSpinBox()
+        self.article_count.setMinimum(1)
+        self.article_count.setMaximum(20)
+        self.article_count.setValue(3)
+
+        cluster_layout.addWidget(QLabel("Člankov na gručo:"))
+        cluster_layout.addWidget(self.article_count)
+
         self.btn_auto_clusters = QPushButton("Auto")
         self.btn_auto_clusters.setEnabled(False)
         self.btn_auto_clusters.clicked.connect(self.auto_cluster_clicked.emit)
@@ -110,9 +118,18 @@ class SelectorWidget(QWidget):
         self.btn_get_news.clicked.connect(self.handle_get_news)
         self.main_layout.addWidget(self.btn_get_news)
 
-        self.news_layout = QVBoxLayout()
+        # --- Scrollable news---
+        self.news_container = QWidget()
+
+        self.news_layout = QVBoxLayout(self.news_container)
         self.news_layout.setSpacing(10)
-        self.main_layout.addLayout(self.news_layout)
+
+        self.news_scroll = QScrollArea()
+        self.news_scroll.setWidgetResizable(True)
+        self.news_scroll.setWidget(self.news_container)
+        self.news_scroll.setMinimumHeight(400)
+
+        self.main_layout.addWidget(self.news_scroll)
 
         self.main_layout.addStretch(1)
 
@@ -160,10 +177,14 @@ class SelectorWidget(QWidget):
     def get_cluster_count(self):
         return self.cluster_count.value()
     
+    def get_article_count(self):
+        return self.article_count.value()
+    
     def handle_dropdown_topic(self, index):
         topic_name = self.topic_dropdown.itemText(index)
         if topic_name or topic_name == "Izberi topic ...":
-            self.topic_selected.emit(topic_name)
+            return
+        self.topic_selected.emit(topic_name)
     
     def handle_radio_toggle(self, is_checked, name):
         if is_checked:

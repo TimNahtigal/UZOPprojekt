@@ -43,6 +43,8 @@ class SelectorWidget(QWidget):
         
         self.btn_action = QPushButton("Process Data")
         self.btn_action.clicked.connect(self.action_clicked.emit)
+        self.status_label = QLabel("Pripravljeno.")
+        self.main_layout.addWidget(self.status_label)
         self.main_layout.addWidget(self.btn_action)
 
         line = QFrame()
@@ -158,10 +160,21 @@ class SelectorWidget(QWidget):
                 widget.deleteLater()
 
     def set_silhouette_score(self, score):
-        if score is None:
-            self.silhouette_label.setText("Silhouette score: ni na voljo")
+        if score is None or score == "-":
+            self.silhouette_label.setText("Silhouette score: -")
         else:
-            self.silhouette_label.setText(f"Silhouette score: {score:.3f}")
+            self.silhouette_label.setText(f"Silhouette score: {float(score):.3f}")
+
+    def set_status(self, text):
+        self.status_label.setText(text)
+
+    def set_controls_enabled(self, enabled):
+        self.btn_action.setEnabled(enabled)
+        self.btn_get_news.setEnabled(enabled and self.selected_topic is not None)
+        self.cluster_count.setEnabled(enabled)
+        self.btn_auto_clusters.setEnabled(False)
+        self.start_date.setEnabled(enabled)
+        self.end_date.setEnabled(enabled)
 
     def display_news(self, df, cluster_word_map):
         self.clear_news()

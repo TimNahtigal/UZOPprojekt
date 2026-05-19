@@ -87,34 +87,53 @@ class MainWindow(QWidget):
 
     def pridobi_topice(self):
         self.active_topic = None 
-        self.selector.clear_topics()
-
-        date_range = f"{self.current_start.toString(Qt.ISODate)} to {self.current_end.toString(Qt.ISODate)}"
-        self.log(f"-"*25)
-        self.log(f"Started getting topics from {len(self.selected_regions)} regions | Period: {date_range}")
         
-        # Novice od do + regije
-        self.log("Gathering the gossip")
-        q_start = self.current_start
-        q_end = self.current_end
-        start_dt = dt.datetime(q_start.year(), q_start.month(), q_start.day())
-        end_dt = dt.datetime(q_end.year(), q_end.month(), q_end.day())
-        params = NoviceParametri(
-            start_time=start_dt,
-            end_time=end_dt,
-            regions=self.selected_regions
-        )
-        _ = self.dataBroker.pridobiNovice(params=params)
-        self.log("Gossip gathered")
+        self.selector.clear_news()
+        self.selector.clear_topics()
+        self.selector.set_silhouette_score("-")
+        self.selector.set_status("Procesiram podatke ...")
+        self.selector.set_controls_enabled(False)
 
-        self.log("Ranking the topics")
-        df_topic = self.dataBroker.getPomembnostTopicov()
-        self.log(str(df_topic.head()))
+        QApplication.processEvents()
 
-        self.selector.update_topics(df_topic, MAX_NUMBER_OF_TOPICS_DISPLAYED)
-        self.log(f"Displayed top {MAX_NUMBER_OF_TOPICS_DISPLAYED} topics.")
+        try:
+            date_range = f"{self.current_start.toString(Qt.ISODate)} to {self.current_end.toString(Qt.ISODate)}"
+            self.log(f"-"*25)
+            self.log(f"Started getting topics from {len(self.selected_regions)} regions | Period: {date_range}")
+            
+            # Novice od do + regije
+            self.log("Gathering the gossip")
+            q_start = self.current_start
+            q_end = self.current_end
+            start_dt = dt.datetime(q_start.year(), q_start.month(), q_start.day())
+            end_dt = dt.datetime(q_end.year(), q_end.month(), q_end.day())
+            params = NoviceParametri(
+                start_time=start_dt,
+                end_time=end_dt,
+                regions=self.selected_regions
+            )
+            _ = self.dataBroker.pridobiNovice(params=params)
+            self.log("Gossip gathered")
+
+            self.log("Ranking the topics")
+            df_topic = self.dataBroker.getPomembnostTopicov()
+            self.log(str(df_topic.head()))
+
+            self.selector.update_topics(df_topic, MAX_NUMBER_OF_TOPICS_DISPLAYED)
+            self.selector.set_status("Pripravljeno. Izberi topic in klikni GET NEWS.")
+            self.log(f"Displayed top {MAX_NUMBER_OF_TOPICS_DISPLAYED} topics.")
+        
+        except Exception as e:
+            self.selector.set_status(f"Napaka pri procesiranju: {e}")
+            self.log(f"ERROR: {e}")
+
+        finally:
+            self.selector.set_controls_enabled(True)
     
     def handle_topic_selection(self, topic_name):
+        self.selector.clear_news()
+        self.selector.set_silhouette_score("-")
+        self.selector.set_status(f"Izbran topic: {topic_name}. Klikni GET NEWS.")
         self.active_topic = topic_name
         self.log(f"Active topic set to: {topic_name}")
         self.selector.set_active_topic(topic_name)

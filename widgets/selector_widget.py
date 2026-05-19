@@ -196,10 +196,58 @@ class SelectorWidget(QWidget):
 
     def display_news(self, df, cluster_word_map):
         self.clear_news()
-        
+
         if cluster_word_map is None:
             cluster_word_map = {}
 
+        grouped = df.groupby("cluster_label")
+
+        for cluster_id, cluster_df in grouped:
+
+            cluster_size = cluster_df.iloc[0].get("cluster_size", "?")
+
+            cluster_header = QLabel(
+                f"<h3>Gruča {cluster_id +1} "
+                f"(št. člankov: {cluster_size})</h3>"
+            )
+
+            self.news_layout.addWidget(cluster_header)
+
+            for _, row in cluster_df.iterrows():
+
+                news_item_frame = QFrame()
+                news_item_frame.setFrameShape(QFrame.StyledPanel)
+
+                item_layout = QVBoxLayout(news_item_frame)
+
+                title_label = QLabel(
+                    f"<b><a href='#'>{row['title']}</a></b>"
+                )
+
+                title_label.setWordWrap(True)
+
+                importance_list = cluster_word_map.get(cluster_id, [])
+
+                title_label.linkActivated.connect(
+                    lambda _, r=row, imp=importance_list:
+                    self.open_detail_window(
+                        r['title'],
+                        r['content'],
+                        imp
+                    )
+                )
+
+                content_preview = str(row['content'])[:250] + "..."
+
+                content_label = QLabel(content_preview)
+                content_label.setWordWrap(True)
+
+                item_layout.addWidget(title_label)
+                item_layout.addWidget(content_label)
+
+                self.news_layout.addWidget(news_item_frame)
+
+        """
         for _, row in df.iterrows():
             news_item_frame = QFrame()
             item_layout = QVBoxLayout(news_item_frame)
@@ -221,7 +269,7 @@ class SelectorWidget(QWidget):
 
             item_layout.addWidget(title_label)
             item_layout.addWidget(content_label)
-            self.news_layout.addWidget(news_item_frame)
+            self.news_layout.addWidget(news_item_frame)"""
 
     def open_detail_window(self, title, content, importance_list):
         self.detail_window = NewsDetailWindow(title, content, importance_list, self)

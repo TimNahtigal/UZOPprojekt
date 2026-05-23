@@ -55,6 +55,7 @@ class MainWindow(QWidget):
         self.selector.topic_selected.connect(self.handle_topic_selection)
         self.selector.regression_selected.connect(self.handle_regression_selection)
         self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
+        self.selector.reset_clicked.connect(self.handle_reset)
 
     def log(self, obj):
         self.console.log(str(obj))
@@ -194,6 +195,19 @@ class MainWindow(QWidget):
         self.selector.display_news(novice_df, importance_map)
 
         self.log("Chiter-chatter fully analysed")
+
+    def handle_reset(self):
+        self.selected_regions.clear()
+        self.active_topic = None
+        self.active_reg = "auto-reg"
+        self.map.set_highlighted_regions(set())
+        self.selector.update_display([])
+        self.selector.clear_topics()
+        self.selector.clear_news()
+        self.selector.set_status("Pripravljeno.")
+        self.selector.set_silhouette_score("-")
+        self.dataBroker.clearAllCache()
+        self.log("Izbira počiščena.")
 
     def handle_auto_cluster(self):
         if self.active_topic is None:

@@ -13,6 +13,7 @@ class SelectorWidget(QWidget):
     get_news_clicked = Signal()
     regression_selected = Signal(str)
     auto_cluster_clicked = Signal()
+    reset_clicked = Signal()
 
     def __init__(self, min_date_str=None, max_date_str=None):
         super().__init__()
@@ -42,6 +43,12 @@ class SelectorWidget(QWidget):
         abs_min = QDate.fromString(min_date_str, Qt.ISODate) if min_date_str else QDate(2000, 1, 1)
         abs_max = QDate.fromString(max_date_str, Qt.ISODate) if max_date_str else QDate.currentDate()
 
+        self.btn_reset = QPushButton("Počisti")
+        self.btn_reset.clicked.connect(self.reset_clicked.emit)
+        top_row = QHBoxLayout()
+        top_row.addStretch(1)
+        self.btn_reset.setFixedWidth(100)
+
         date_layout = QHBoxLayout()
         self.start_date = QDateEdit(calendarPopup=True, date=abs_min)
         self.end_date = QDateEdit(calendarPopup=True, date=abs_max)
@@ -57,6 +64,7 @@ class SelectorWidget(QWidget):
         date_layout.addWidget(self.end_date)
         self.main_layout.addLayout(date_layout)
         date_layout.addStretch(1)
+        date_layout.addWidget(self.btn_reset)
 
         self.display = QPlainTextEdit(readOnly=True)
         self.display.setMaximumHeight(60)
@@ -106,6 +114,8 @@ class SelectorWidget(QWidget):
         cluster_layout.addWidget(self.btn_auto_clusters)
 
         self.main_layout.addLayout(cluster_layout)
+
+        reset_clicked = Signal()
 
         # --- Radio Buttons Layout ---
         self.method_group = QButtonGroup(self)

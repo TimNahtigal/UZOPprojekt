@@ -15,36 +15,12 @@ class NewsDetailWindow(QDialog):
         layout.addWidget(title_label)
 
         legend = QLabel("""
-        <table style="
-            border-collapse: collapse;
-            border: 1px solid #bdbdbd;
-            font-size: 12px;
-            margin-bottom: 8px;
-            background: transparent;
-        ">
-            <tr style="background:#efefef;">
-                <th style="padding:6px 10px; border:1px solid #ccc;">Intenziteta</th>
-                <th style="padding:6px 10px; border:1px solid #ccc;">Pomen</th>
-            </tr>
-
-            <tr>
-                <td style="background: rgba(255,193,7,0.25); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
-                    Nizka
-                </td>
-                <td style="padding:6px 10px; border:1px solid #ccc;">
-                    Manj pomembne besede v gruči/članku
-                </td>
-            </tr>
-
-            <tr>
-                <td style="background: rgba(255,193,7,1.0); padding:6px 10px; border:1px solid #ccc; font-weight: bold;">
-                    Visoka
-                </td>
-                <td style="padding:6px 10px; border:1px solid #ccc;">
-                    Najpomembnejše besede v gruči/članku
-                </td>
-            </tr>
-        </table>
+        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">
+            Označene besede so ključne za to gručo — 
+            <span style="background: rgba(255,193,7,0.3); padding: 1px 4px;">manj pomembne</span> 
+            do 
+            <span style="background: rgba(255,193,7,1.0); padding: 1px 4px;">najpomembnejše</span>
+        </div>
         """)
         layout.addWidget(legend)
 

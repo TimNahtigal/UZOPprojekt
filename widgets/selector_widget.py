@@ -68,12 +68,12 @@ class SelectorWidget(QWidget):
 
         self.display = QPlainTextEdit(readOnly=True)
         self.display.setMaximumHeight(60)
-        self.main_layout.addWidget(QLabel("Selected Regions:"))
+        self.main_layout.addWidget(QLabel("Izbrane regije:"))
         self.main_layout.addWidget(self.display)
         
         self.btn_action = QPushButton("Process Data")
         self.btn_action.clicked.connect(self.action_clicked.emit)
-        self.status_label = QLabel("Pripravljeno.")
+        self.status_label = QLabel("Pripravljeno. Izberi <span style='color: #e65100;'>regijo</span> in <span style='color: #e65100;'>obdobje</span>, nato klikni <span style='color: #e65100;'>PROCESS DATA</span>.")
         self.main_layout.addWidget(self.status_label)
         self.main_layout.addWidget(self.btn_action)
 
@@ -83,7 +83,7 @@ class SelectorWidget(QWidget):
         self.main_layout.addWidget(line)
 
         # --- Dynamic Topics Area ---
-        self.topic_label = QLabel("Top Topics:")
+        self.topic_label = QLabel("Seznam tem:")
         self.main_layout.addWidget(self.topic_label)
 
         self.topic_dropdown = QComboBox()
@@ -277,8 +277,13 @@ class SelectorWidget(QWidget):
     def set_silhouette_score(self, score):
         if score is None or score == "-":
             self.silhouette_label.setText("Silhouette score: -")
-        else:
-            self.silhouette_label.setText(f"Silhouette score: {float(score):.3f}")
+            self.silhouette_label.setStyleSheet("")
+            return
+        self.silhouette_label.setText(
+            f'Silhouette score: <b>{float(score):.3f}</b>'
+        )
+        self.silhouette_label.setTextFormat(Qt.RichText)
+        self.silhouette_label.setStyleSheet(f"color: {"#e65100"}; font-weight: bold;")
 
     def set_status(self, text):
         self.status_label.setText(text)
@@ -316,7 +321,7 @@ class SelectorWidget(QWidget):
                 news_item_frame.setFrameShape(QFrame.StyledPanel)
                 item_layout = QVBoxLayout(news_item_frame)
 
-                title_label = QLabel(f"<b><a href='#'>{row['title']}</a></b>")
+                title_label = QLabel(f"<a href='#' style='color:  #e65100; font-weight: bold;'>{row['title']}</a>")
                 title_label.setWordWrap(True)
 
                 importance_list = cluster_word_map.get(cluster_id, [])

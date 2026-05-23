@@ -121,7 +121,7 @@ class MainWindow(QWidget):
             self.selector.update_topics(df_topic, len(df_topic))
             
             if self.selector.topic_dropdown.count() > 1:
-                self.selector.set_status("Pripravljeno. Izberi topic in klikni GET NEWS.")
+                self.selector.set_status("""Pripravljeno. Izberi <span style='color: #e65100;'>topic</span> in klikni <span style='color: #e65100;'>GET NEWS</span>.""")
             else:
                 self.selector.set_status("Ni najdenih tem z novicami za izbrano obdobje.")
                 
@@ -137,7 +137,7 @@ class MainWindow(QWidget):
     def handle_topic_selection(self, topic_name):
         self.selector.clear_news()
         self.selector.set_silhouette_score("-")
-        self.selector.set_status(f"Izbran topic: {topic_name}. Klikni GET NEWS.")
+        self.selector.set_status(f"Izbran topic: klikni <span style='color: #e65100;'>{topic_name}</span>. Klikni <span style='color: #e65100;'>GET NEWS</span>")
         self.active_topic = topic_name
         self.log(f"Active topic set to: {topic_name}")
         self.selector.set_active_topic(topic_name)

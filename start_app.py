@@ -137,7 +137,7 @@ class MainWindow(QWidget):
     def handle_topic_selection(self, topic_name):
         self.selector.clear_news()
         self.selector.set_silhouette_score("-")
-        self.selector.set_status(f"Izbran topic: klikni <span style='color: #e65100;'>{topic_name}</span>. Klikni <span style='color: #e65100;'>GET NEWS</span>")
+        self.selector.set_status(f"Izbran topic: <span style='color: #e65100;'>{topic_name}</span>. Klikni <span style='color: #e65100;'>GET NEWS</span>")
         self.active_topic = topic_name
         self.log(f"Active topic set to: {topic_name}")
         self.selector.set_active_topic(topic_name)

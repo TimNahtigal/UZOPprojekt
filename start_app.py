@@ -57,6 +57,8 @@ class MainWindow(QWidget):
         self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
         self.selector.reset_clicked.connect(self.handle_reset)
 
+        self.log("Using 35657 filtered articles of 72446 news articles")
+
     def log(self, obj):
         self.console.log(str(obj))
 

@@ -349,8 +349,28 @@ class DataBroker:
 
 
         # Display results
-        for cluster, features in importance_per_cluster.items():
-            self._logger(f"Cluster {cluster} Top Attributes: {features}")
+        for cluster_id, features in importance_per_cluster.items():
+            # Get the top 5 features for the current cluster
+            top_5_features = features[:5]
+            
+            # Print header line for the cluster
+            self._logger(f"Cluster {cluster_id} (Atribute importance/cluster center importance):")
+            
+            # Print each feature on its own line beneath the header
+            for word, importance_score in top_5_features:
+                try:
+                    indices = np.where(self.loaded_vocab == word)[0]
+                    if indices.size > 0:
+                        word_idx = indices[0]
+                        cc_value = centroidi[cluster_id][word_idx]
+                    else:
+                        cc_value = 0.0
+                except (ValueError, IndexError):
+                    cc_value = 0.0
+
+                # Formats line exactly as requested: word importance/cluster_center
+                self._logger(f"{word} {importance_score:.3f}/{cc_value:.3f}")
+                
 
         return (most_representative_news, importance_per_cluster, cluster_score)
     

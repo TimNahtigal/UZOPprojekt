@@ -359,18 +359,31 @@ class DataBroker:
             # Print each feature on its own line beneath the header
             for word, importance_score in top_5_features:
                 try:
-                    indices = np.where(self.loaded_vocab == word)[0]
-                    if indices.size > 0:
-                        word_idx = indices[0]
-                        cc_value = centroidi[cluster_id][word_idx]
+                    if regression == "clustercenter":
+                        # If we already calculated it in the block above, just mirror it
+                        cc_value = importance_score
                     else:
-                        cc_value = 0.0
+                        # For regression modes, find the word index in the vocabulary
+                        indices = np.where(self.loaded_vocab == word)[0]
+                        if indices.size > 0:
+                            word_idx = indices[0]
+                            
+                            # Get the raw score and the sum of all scores for this cluster center
+                            raw_scores = centroidi[cluster_id]
+                            total_cluster_sum = np.sum(raw_scores)
+                            
+                            # Apply the exact same L1-normalization to the cluster center coordinate
+                            if total_cluster_sum > 0:
+                                cc_value = raw_scores[word_idx] / total_cluster_sum
+                            else:
+                                cc_value = 0.0
+                        else:
+                            cc_value = 0.0
                 except (ValueError, IndexError):
                     cc_value = 0.0
 
                 # Formats line exactly as requested: word importance/cluster_center
                 self._logger(f"{word} {importance_score:.3f}/{cc_value:.3f}")
-                
 
         return (most_representative_news, importance_per_cluster, cluster_score)
     

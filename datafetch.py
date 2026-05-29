@@ -184,7 +184,7 @@ class DataBroker:
         if len(data_in_topic) > st_gruc and len(set(data_in_topic["cluster_label"])) > 1:
             cluster_score = silhouette_score(tfidf_data, data_in_topic["cluster_label"],
                 metric="cosine" )
-            self._logger(f"Cluster quality score (silhouette): {cluster_score:.3f}")
+            self._logger(f"Cluster quality score (silhouette): [{cluster_score:.3f}]")
         else:
             self._logger("Cluster quality score not available.")
 
@@ -229,7 +229,7 @@ class DataBroker:
 
         self._logger("\n--- Število novic po clusterjih ---")
         for cluster_id, count in cluster_counts.items():
-            self._logger(f"Cluster {cluster_id}: {count} novic")
+            self._logger(f"Cluster {cluster_id}: [{count}] novic")
         self._logger("-"*25)
 
         # coords = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(tfidf_data)
@@ -354,7 +354,7 @@ class DataBroker:
             top_5_features = features[:5]
             
             # Print header line for the cluster
-            self._logger(f"Cluster {cluster_id} (Atribute importance/cluster center importance):")
+            self._logger(f"Cluster {cluster_id} ([Atribute importance]/cluster center importance):")
             
             # Print each feature on its own line beneath the header
             for word, importance_score in top_5_features:
@@ -383,7 +383,7 @@ class DataBroker:
                     cc_value = 0.0
 
                 # Formats line exactly as requested: word importance/cluster_center
-                self._logger(f"{word} {importance_score:.3f}/{cc_value:.3f}")
+                self._logger(f"[{word} {importance_score:.3f}]/{cc_value:.3f}")
 
         return (most_representative_news, importance_per_cluster, cluster_score)
     

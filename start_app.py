@@ -8,6 +8,7 @@ from widgets.selector_widget import SelectorWidget
 from datafetch import DataBroker, NoviceParametri
 import datetime as dt
 from qt_material import apply_stylesheet
+import pandas as pd
 
 MAX_NUMBER_OF_TOPICS_DISPLAYED = 3
 NUMBER_OF_NEWS_TO_DISPLAY = 3
@@ -57,7 +58,7 @@ class MainWindow(QWidget):
         self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
         self.selector.reset_clicked.connect(self.handle_reset)
 
-        self.log("Using 35657 filtered articles of 72446 news articles")
+        self.log("Using [35657] filtered articles of [72446] news articles")
 
     def log(self, obj):
         self.console.log(str(obj))
@@ -118,7 +119,7 @@ class MainWindow(QWidget):
 
             self.log("Ranking the topics")
             df_topic = self.dataBroker.getPomembnostTopicov()
-            self.log(str(df_topic.head()))
+            self.log("TOPICS: <br>" + format_dataframe_to_string(df_topic, 5))
 
             self.selector.update_topics(df_topic, len(df_topic))
             
@@ -127,7 +128,6 @@ class MainWindow(QWidget):
             else:
                 self.selector.set_status("Ni najdenih tem z novicami za izbrano obdobje.")
                 
-            self.log("Displayed formatted topics in dropdown selection window.")
         
         except Exception as e:
             self.selector.set_status(f"Napaka pri procesiranju: {e}")
@@ -159,7 +159,6 @@ class MainWindow(QWidget):
         cluster_count = self.selector.get_cluster_count()
         article_count = self.selector.get_article_count()
 
-        # Enforce that (cluster_count * article_count) <= total_news_available
         if total_news_available > 0 and (cluster_count * article_count) > total_news_available:
             self.log(f"Requested configuration ({cluster_count}x{article_count}) exceeds total available news ({total_news_available}). Auto-adjusting...")
             if total_news_available == 1:
@@ -181,8 +180,8 @@ class MainWindow(QWidget):
             pridobi_pomembnost_besed = True
             regression = self.active_reg
 
-        self.log(f"Using {cluster_count} clusters")
-        self.log(f"Showing {article_count} articles per cluster")
+        self.log(f"Using [{cluster_count}] clusters")
+        self.log(f"Showing [{article_count}] articles per cluster")
 
         result = self.dataBroker.topNnovicIzTopica(topics=self.active_topic, st_gruc=cluster_count, st_clankov_na_gruco=article_count,
                                                  pridobi_pomembnosti_besed=pridobi_pomembnost_besed, regression=regression )
@@ -236,6 +235,34 @@ class MainWindow(QWidget):
         
         self.handle_get_news()
         self.log(f"Auto selected {best_k} clusters.")
+
+### UTIL
+def format_dataframe_to_string(df, num_rows=5):
+    """
+    Takes a DataFrame or Series, grabs the top N rows, 
+    and formats them into a clean 'key value' string format.
+    """
+    lines = []
+    
+    # If it's a pandas Series (e.g., from df['topic'].value_counts())
+    if isinstance(df, pd.Series):
+        # Grab the top N items
+        target_series = df.head(num_rows)
+        for key, value in target_series.items():
+            lines.append(f"[{key}] {value}")
+            
+    # If it's a standard DataFrame
+    elif isinstance(df, pd.DataFrame):
+        # Grab the top N rows
+        target_df = df.head(num_rows)
+        for _, row in target_df.iterrows():
+            # Uses the first column as key, second column as value
+            key = row.iloc[0]
+            value = row.iloc[1]
+            lines.append(f"[{key}] {value}")
+            
+    # Join all lines with a newline character
+    return "<br>".join(lines)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

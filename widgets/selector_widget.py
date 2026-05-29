@@ -71,9 +71,9 @@ class SelectorWidget(QWidget):
         self.main_layout.addWidget(QLabel("Izbrane regije:"))
         self.main_layout.addWidget(self.display)
         
-        self.btn_action = QPushButton("Process Data")
+        self.btn_action = QPushButton("Procesiraj podatke")
         self.btn_action.clicked.connect(self.action_clicked.emit)
-        self.status_label = QLabel("Pripravljeno. Izberi <span style='color: #e65100;'>regijo</span> in <span style='color: #e65100;'>obdobje</span>, nato klikni <span style='color: #e65100;'>PROCESS DATA</span>.")
+        self.status_label = QLabel("Pripravljeno. Izberi <span style='color: #e65100;'>regijo</span> in <span style='color: #e65100;'>obdobje</span>, nato klikni <span style='color: #e65100;'>Procesiraj podatke</span>.")
         self.main_layout.addWidget(self.status_label)
         self.main_layout.addWidget(self.btn_action)
 

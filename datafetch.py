@@ -136,7 +136,7 @@ class DataBroker:
             return self.cached_data['topic'].value_counts()
         else:
             return novice_df['topic'].value_counts()
-        
+
     def topNnovicIzTopica(self, topics: str | set[str] | None = None, st_gruc: int = 3, st_clankov_na_gruco: int = 3, pridobi_pomembnosti_besed: bool = False, regression: str | None = None):
         """
         Pridobi top novice iz podnega topica. 
@@ -172,26 +172,52 @@ class DataBroker:
 
         self._logger("Started")
         
-        # Naredi clusterje
+        # Parse text arrays
         tfidf_data = np.stack(data_in_topic["tfidf"].values)
-        kmeans = KMeans(n_clusters=st_gruc, random_state=self.random_seed, init='k-means++', n_init=20)
-        data_in_topic["cluster_label"] = kmeans.fit_predict(tfidf_data)
-        
-        self._logger("Made clusters")
+        n_novic_v_topicu = len(data_in_topic)
 
-        cluster_score = None
+        # --- Handle Single Cluster Edge Case Condition ---
+        is_single_cluster = (st_gruc == 1) or (n_novic_v_topicu <= 1)
 
-        if len(data_in_topic) > st_gruc and len(set(data_in_topic["cluster_label"])) > 1:
-            cluster_score = silhouette_score(tfidf_data, data_in_topic["cluster_label"],
-                metric="cosine" )
-            self._logger(f"Cluster quality score (silhouette): [{cluster_score:.3f}]")
+        if is_single_cluster:
+            self._logger(f"Using a single cluster approach (Total articles: {n_novic_v_topicu})")
+            # If grouping is forced to 1, all elements belong to a unified block
+            st_gruc = 1 
+            data_in_topic["cluster_label"] = 0
+            # Centroid is simply the mathematical average of all features combined
+            centroidi = np.mean(tfidf_data, axis=0, keepdims=True)
+            
+            if regression not in [None, "clustercenter"]:
+                self._logger(f"[WARNING: Regression '{regression}' requires at least 2 unique classes. Falling back to 'clustercenter'.]")
+                regression = "clustercenter"
         else:
-            self._logger("Cluster quality score not available.")
+            # Standard Multi-Cluster Workflow
+            kmeans = KMeans(n_clusters=st_gruc, random_state=self.random_seed, init='k-means++', n_init=20)
+            data_in_topic["cluster_label"] = kmeans.fit_predict(tfidf_data)
+            centroidi = kmeans.cluster_centers_
+            self._logger("Made clusters")
 
-        # Najde sredine clusterjev
-        centroidi = kmeans.cluster_centers_
+        # --- Cluster Quality Score Check ---
+        cluster_score = None
+        edinstvene_gruce = len(set(data_in_topic["cluster_label"]))
+
+        if is_single_cluster or edinstvene_gruce <= 1:
+            self._logger("[WARNING: Cluster quality score not available. Reason: Single cluster scenario.]")
+        elif n_novic_v_topicu <= st_gruc:
+            self._logger("[WARNING: Cluster quality score not available. Reason: Too few articles for requested groups.]")
+        else:
+            try:
+                cluster_score = silhouette_score(
+                    tfidf_data, 
+                    data_in_topic["cluster_label"],
+                    metric="cosine"
+                )
+                self._logger(f"Cluster quality score (silhouette): [{cluster_score:.3f}]")
+            except Exception as e:
+                self._logger(f"[WARNING: Cluster quality score not available. Math/Data error: {e}]")
+
+        # Find closest items to centers
         rows = []
-
         for cluster_id in range(st_gruc):
             cluster_mask = data_in_topic["cluster_label"] == cluster_id
             cluster_df = data_in_topic[cluster_mask].copy()
@@ -217,10 +243,7 @@ class DataBroker:
             by=["cluster_size", "cluster_label", "distance_to_centroid"],
             ascending=[False, True, True]
         )
-        #self._logger(most_representative_news)
-        self._logger("Found cluster centers")
 
-        # Sortiraj po najbolj pomembnem clusterju (najbolj pomemben cluster je tist z največ novic)
         cluster_counts = data_in_topic['cluster_label'].value_counts()
         most_representative_news['cluster_size'] = most_representative_news['cluster_label'].map(cluster_counts)
         most_representative_news = most_representative_news.sort_values(by='cluster_size', ascending=False)
@@ -232,40 +255,31 @@ class DataBroker:
             self._logger(f"Cluster {cluster_id}: [{count}] novic")
         self._logger("-"*25)
 
-        # coords = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(tfidf_data)
-        # plt.figure(figsize=(10, 7))
-        # scatter = plt.scatter(coords[:, 0], coords[:, 1], c=data_in_topic["cluster_label"], cmap='viridis', alpha=0.6)
-        # plt.colorbar(scatter, label='Cluster ID')
-        # plt.title(f'Vizualizacija {st_novic} clusterjev (PCA redukcija)')
-        # plt.xlabel('Glavna komponenta 1')
-        # plt.ylabel('Glavna komponenta 2')
-        # rep_coords = coords[closest_indices]
-        # plt.scatter(rep_coords[:, 0], rep_coords[:, 1], c='red', marker='X', s=100, label='Središča (Centroidi)')
-        # plt.legend()
-        # plt.show()
-
         if not pridobi_pomembnosti_besed:
-            # Če rabimo samo najbolj representetive news, ne pa pomembnosti besed
             return (most_representative_news, None, cluster_score)
         
+        # --- Handle auto-reg mode logging configuration changes ---
         if regression == "auto-reg":
-            n_novic = len(data_in_topic)
-
-            if n_novic < 30: #malo
-                regression = "logregcv"
-                self._logger(f"Auto-reg: {n_novic} novic -> logregcv")
-            elif n_novic < 200: #srednje
-                regression = "logreg"
-                self._logger(f"Auto-reg: {n_novic} novic -> logreg with predefined C")
+            if is_single_cluster:
+                regression = "clustercenter"
+                self._logger("Auto-reg selection: Single cluster evaluated -> Selected 'clustercenter'")
             else:
-                regression = "logreg_sampled"
-                self._logger(f"Auto-reg: {n_novic} novic -> logreg on random sample")
+                n_novic = len(data_in_topic)
+                if n_novic < 30:
+                    regression = "logregcv"
+                    self._logger(f"Auto-reg selection: {n_novic} novic -> Selected 'logregcv'")
+                elif n_novic < 200:
+                    regression = "logreg"
+                    self._logger(f"Auto-reg selection: {n_novic} novic -> Selected 'logreg' with predefined C")
+                else:
+                    regression = "logreg_sampled"
+                    self._logger(f"Auto-reg selection: {n_novic} novic -> Selected 'logreg_sampled' on random sample")
 
-
-        if regression == "clustercenter":
-            self._logger("Not using regression")
-            centroidi = kmeans.cluster_centers_
-
+        if regression == "clustercenter" or regression is None:
+            if regression is None:
+                self._logger("Not using regression (defaulting to clustercenter weights)")
+                regression = "clustercenter"
+                
             importance_per_cluster = {}
             vocab_array = np.array(self.loaded_vocab)
 
@@ -275,8 +289,7 @@ class DataBroker:
                 total_cluster_sum = np.sum(scores)
                 if total_cluster_sum > 0:
                     norm_scores = scores / total_cluster_sum
-                    relevant_indices = np.where(norm_scores > 0.01)[0] # Only those that contribute more than 1%
-                    
+                    relevant_indices = np.where(norm_scores > 0.01)[0]
                     sorted_indices = relevant_indices[np.argsort(norm_scores[relevant_indices])[::-1]]
                     
                     importance_per_cluster[cluster_id] = [
@@ -286,29 +299,34 @@ class DataBroker:
                 else:
                     importance_per_cluster[cluster_id] = []
         else:
+            # --- Standard Multi-Class Regression Processing Layer ---
+            clf = None
             if regression == "logregcv":
-                clf = LogisticRegressionCV(
-                    solver='saga', 
-                    penalty='l1', 
-                    max_iter=2000,
-                    class_weight='balanced',
-                    n_jobs=-1
-                ).fit(tfidf_data, data_in_topic['cluster_label'])
-            elif regression == "logreg": # Najhitrejši somehow (mby celo najboljši)
+                try:
+                    clf = LogisticRegressionCV(
+                        solver='saga', 
+                        penalty='l1', 
+                        max_iter=2000,
+                        class_weight='balanced',
+                        n_jobs=-1
+                    ).fit(tfidf_data, data_in_topic['cluster_label'])
+                except Exception as e:
+                    self._logger(f"[WARNING: LogisticRegressionCV stratified validation split failed: {e}. Falling back to 'logreg'.]")
+                    regression = "logreg"
+
+            if regression == "logreg":
                 clf = LogisticRegression(
                     solver='saga', 
                     penalty='l1', 
                     max_iter=2000,
                     C=5,
-                    class_weight='balanced', # Da nima največji cluster ogromno besed, ki so common vsem
-                    n_jobs=-1 # Multithreading
+                    class_weight='balanced',
+                    n_jobs=-1
                 ).fit(tfidf_data, data_in_topic['cluster_label'])
 
             elif regression == "logreg_sampled":
                 sample_size = min(200, len(data_in_topic))
-
-                sampled_data = data_in_topic.sample(
-                    n=sample_size, random_state=self.random_seed)
+                sampled_data = data_in_topic.sample(n=sample_size, random_state=self.random_seed)
 
                 tfidf_sample = np.stack(sampled_data["tfidf"].values)
                 labels_sample = sampled_data["cluster_label"]
@@ -321,23 +339,26 @@ class DataBroker:
                     n_jobs=-1
                 ).fit(tfidf_sample, labels_sample)
 
-            else:
+            if clf is None:
                 self._logger("Izberi regresijo!")
                 return None       
             
-            # NOTE: still in regression part of if statement
             importance_per_cluster = {}
-            vocab_array = np.array(self.loaded_vocab)
+            vocab_array = np.array(self.loaded_vocab, dtype=str)
+
+            if clf.coef_.shape[0] == 1:
+                coef_matrix = np.vstack([-clf.coef_, clf.coef_])
+            else:
+                coef_matrix = clf.coef_
 
             for i, cluster_id in enumerate(clf.classes_): 
-                coefs = clf.coef_[i]
+                coefs = coef_matrix[i]
                 abs_coefs = np.abs(coefs)
-                
                 total_magnitude = np.sum(abs_coefs)
                 
                 if total_magnitude > 0:
                     norm_importance = abs_coefs / total_magnitude 
-                    relevant_indices = np.where(norm_importance > 0.01)[0] # only those who contribute more than 1%
+                    relevant_indices = np.where(norm_importance > 0.01)[0]
                     sorted_indices = relevant_indices[np.argsort(norm_importance[relevant_indices])[::-1]]
                     
                     importance_per_cluster[cluster_id] = [
@@ -347,32 +368,22 @@ class DataBroker:
                 else:
                     importance_per_cluster[cluster_id] = []
 
-
         # Display results
         for cluster_id, features in importance_per_cluster.items():
-            # Get the top 5 features for the current cluster
             top_5_features = features[:5]
-            
-            # Print header line for the cluster
             self._logger(f"Cluster {cluster_id} ([Atribute importance]/cluster center importance):")
             
-            # Print each feature on its own line beneath the header
             for word, importance_score in top_5_features:
                 try:
                     if regression == "clustercenter":
-                        # If we already calculated it in the block above, just mirror it
                         cc_value = importance_score
                     else:
-                        # For regression modes, find the word index in the vocabulary
-                        indices = np.where(self.loaded_vocab == word)[0]
+                        indices = np.where(vocab_array == str(word))[0]
                         if indices.size > 0:
                             word_idx = indices[0]
-                            
-                            # Get the raw score and the sum of all scores for this cluster center
                             raw_scores = centroidi[cluster_id]
                             total_cluster_sum = np.sum(raw_scores)
                             
-                            # Apply the exact same L1-normalization to the cluster center coordinate
                             if total_cluster_sum > 0:
                                 cc_value = raw_scores[word_idx] / total_cluster_sum
                             else:
@@ -382,11 +393,10 @@ class DataBroker:
                 except (ValueError, IndexError):
                     cc_value = 0.0
 
-                # Formats line exactly as requested: word importance/cluster_center
                 self._logger(f"[{word} {importance_score:.3f}]/{cc_value:.3f}")
 
-        return (most_representative_news, importance_per_cluster, cluster_score)
-    
+        return (most_representative_news, importance_per_cluster, cluster_score)        
+
     def chooseOptimalnoSteviloGruc(self, topics=None, min_k=2, max_k=10):
         if self.cached_data is None:
             self.pridobiNovice()

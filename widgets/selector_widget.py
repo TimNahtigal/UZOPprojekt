@@ -326,7 +326,7 @@ class SelectorWidget(QWidget):
 
                 importance_list = cluster_word_map.get(cluster_id, [])
                 title_label.linkActivated.connect(
-                    lambda _, r=row, imp=importance_list: self.open_detail_window(r['title'], r['content'], imp)
+                    lambda _, r=row, imp=importance_list: self.open_detail_window(r['title'], r['content'], imp, r['intersected_naselja'])
                 )
 
                 content_preview = str(row['content'])[:250] + "..."
@@ -337,6 +337,6 @@ class SelectorWidget(QWidget):
                 item_layout.addWidget(content_label)
                 self.news_layout.addWidget(news_item_frame)
 
-    def open_detail_window(self, title, content, importance_list):
-        self.detail_window = NewsDetailWindow(title, content, importance_list, self)
+    def open_detail_window(self, title, content, importance_list, intersected_regions):
+        self.detail_window = NewsDetailWindow(title, content, importance_list, intersected_regions, self)
         self.detail_window.show()

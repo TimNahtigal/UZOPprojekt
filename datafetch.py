@@ -4,7 +4,8 @@ import numpy as np
 import sqlite3
 import datetime as dt
 import copy
-
+import json
+import pickle
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import pairwise_distances_argmin_min 
@@ -62,7 +63,7 @@ class DataBroker:
 
     def pridobiNovice(self, params: NoviceParametri | None = None) -> pd.DataFrame:
         """
-            Dobi in kašira novice, ki zadostujejo nekim parametrom ( start date, end date, regions list (id format ali pa ime) ). 
+        Dobi in kašira novice, ki zadostujejo nekim parametrom ( start date, end date, regions list (id format ali pa ime) ). 
         """
         # Če so parametri kaširani in data ni none
         if params == self.cached_parameters and self.cached_data is not None:
@@ -76,15 +77,23 @@ class DataBroker:
 
         remaped_params = copy.deepcopy(params)
 
-        # Remapi regije v id format
-        if remaped_params.regions and not all(len(r) == 5 for r in params.regions): # Če so slučajno že v id formatu
+        # FIX: Safely extract names from list structures if nested to avoid unhashable type list error
+        if remaped_params.regions and not all(isinstance(r, str) and len(r) == 5 for r in params.regions):
+            flat_regions = []
+            for r in remaped_params.regions:
+                if isinstance(r, list):
+                    flat_regions.extend(r)
+                else:
+                    flat_regions.append(r)
+                    
             remaped_params.regions = {
                 self.dict_of_regions[name] 
-                for name in remaped_params.regions 
+                for name in flat_regions 
                 if name in self.dict_of_regions
             }
             
 
+        # UPDATED SQL: Added a JOIN to the regije table in the subquery to fetch r_nas.name 
         query = """
         SELECT 
             n.id, 
@@ -93,11 +102,20 @@ class DataBroker:
             n.clean_content,
             n.topic, 
             n.date, 
-            GROUP_CONCAT(r.name, ', ') AS regions,
-            n.tfidf
+            n.tfidf,
+            (
+                SELECT '[' || GROUP_CONCAT('["' || r_sub.id || '", "' || r_sub.name || '"]') || ']'
+                FROM novice_regije nr_sub
+                JOIN regije r_sub ON nr_sub.regija_id = r_sub.id
+                WHERE nr_sub.novica_id = n.id
+            ) AS regions,
+            (
+                SELECT '[' || GROUP_CONCAT('["' || nn.regija_id || '", "' || r_nas.name || '", "' || nn.naselje || '"]') || ']' 
+                FROM novice_naselja nn
+                JOIN regije r_nas ON nn.regija_id = r_nas.id
+                WHERE nn.novica_id = n.id
+            ) AS intersected_naselja
         FROM novice n
-        JOIN novice_regije nr ON n.id = nr.novica_id
-        JOIN regije r ON nr.regija_id = r.id
         WHERE 1=1
         """
         
@@ -111,19 +129,51 @@ class DataBroker:
             query += " AND n.date <= ?"
             args.append(remaped_params.end_time.date())
             
+        # Keep filtration functional by joining against the target criteria table
         if remaped_params.regions:
             placeholders = ', '.join(['?'] * len(remaped_params.regions))
-            query += f" AND r.id IN ({placeholders})"
+            query += f""" AND n.id IN (
+                SELECT novica_id FROM novice_regije WHERE regija_id IN ({placeholders})
+            )"""
             args.extend(list(remaped_params.regions))
-
-        query += " GROUP BY n.id"
-        
+            
         df = pd.read_sql_query(query, self.db_connection, params=args)
         
-        df['regions'] = df['regions'].apply(lambda x: x.split(', ') if x else [])
-        df['tfidf'] = df['tfidf'].apply(lambda x: np.frombuffer(x, dtype=np.float64) if x else None)
+        def parse_regions(x):
+            if not x:
+                return []
+            try:
+                return [tuple(item) for item in json.loads(x)]
+            except Exception:
+                return []
+        df['regions'] = df['regions'].apply(parse_regions)
+        
+        # Handle tfidf unpickling (since we switched to pickle in save function)
+        def load_tfidf(x):
+            if not x: return None
+            try:
+                return pickle.loads(x)
+            except Exception:
+                return np.frombuffer(x, dtype=np.float64) # fallback to your old variant
+        df['tfidf'] = df['tfidf'].apply(load_tfidf)
+        
+        # New transformation: Safely builds 3-element tuples (id, region name, naselje)
+        def parse_naselja(x):
+            if not x: 
+                return []
+            try:
+                return [tuple(item) for item in json.loads(x)]
+            except Exception:
+                return []
+                
+        df['intersected_naselja'] = df['intersected_naselja'].apply(parse_naselja)
+        
+        # Keep original exact sorting structure intact
         self.cached_data = df.sort_index()
         self.cached_parameters = copy.deepcopy(params)
+
+        return self.cached_data
+
     
     def getPomembnostTopicov(self, novice_df : pd.DataFrame = None) -> pd.DataFrame:
         '''

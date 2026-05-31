@@ -268,6 +268,15 @@ def format_dataframe_to_string(df, num_rows=5):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     apply_stylesheet(app, theme='light_blue.xml', invert_secondary=True)
+
+    app.setStyleSheet(app.styleSheet() + """
+    QToolTip {
+    color: #555555;
+    background-color: rgba(240, 240, 240, 220);
+    border: 1px solid #cccccc;
+    padding: 4px;
+    }
+    """)
     
     window = MainWindow()
     window.show()

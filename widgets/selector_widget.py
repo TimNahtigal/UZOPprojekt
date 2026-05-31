@@ -123,9 +123,18 @@ class SelectorWidget(QWidget):
         radio_layout = QHBoxLayout()
         
         methods = [("auto-reg", True), ("None", False), ("clustercenter", False), ("logreg", False), ("logregcv", False)] 
+        tooltips = {
+            "auto-reg": "Samodejno izbere primerno metodo glede na število novic.",
+            "None": "Prikaže samo reprezentativne članke.",
+            "clustercenter": "Prikaže besede z največjo težo v centroidu gruče.",
+            "logreg": "Prikaže besede, ki najbolj ločijo gručo od ostalih.",
+            "logregcv": "Kot logreg, vendar s cross-validacijo."
+        }
         for name, checked in methods:
             rb = QRadioButton(name)
             rb.setChecked(checked)
+            rb.setMouseTracking(True)
+            rb.setToolTip(tooltips.get(name, ""))
             self.method_group.addButton(rb)
             radio_layout.addWidget(rb)
             self.radio_buttons.append(rb)
@@ -280,10 +289,14 @@ class SelectorWidget(QWidget):
             self.silhouette_label.setStyleSheet("")
             return
         self.silhouette_label.setText(
-            f'Silhouette score: <b>{float(score):.3f}</b>'
+            f"<span style='color:#e65100; font-weight:bold;'>Silhouette score: {score:.3f}</span>"
+            f"<br>"
+            f"<span style='font-size:11px; color:#777; font-weight:normal;'>"
+            f"Višje vrednosti pomenijo bolj jasno ločene gruče."
+            f"</span>"
         )
         self.silhouette_label.setTextFormat(Qt.RichText)
-        self.silhouette_label.setStyleSheet(f"color: {"#e65100"}; font-weight: bold;")
+        self.silhouette_label.setStyleSheet("")
 
     def set_status(self, text):
         self.status_label.setText(text)

@@ -110,6 +110,7 @@ class SelectorWidget(QWidget):
 
         self.btn_auto_clusters = QPushButton("Auto")
         self.btn_auto_clusters.setEnabled(False)
+        self.btn_auto_clusters.setToolTip("Samodejno izbere število gruč glede na silhouette score.")
         self.btn_auto_clusters.clicked.connect(self.auto_cluster_clicked.emit)
         cluster_layout.addWidget(self.btn_auto_clusters)
 
@@ -143,6 +144,7 @@ class SelectorWidget(QWidget):
         self.main_layout.addLayout(radio_layout)
 
         self.silhouette_label = QLabel("Silhouette score: -")
+        self.silhouette_label.setToolTip("Višje vrednosti pomenijo bolj jasno ločene gruče.")
         self.main_layout.addWidget(self.silhouette_label)
 
         self.btn_get_news = QPushButton("Get News")
@@ -290,10 +292,6 @@ class SelectorWidget(QWidget):
             return
         self.silhouette_label.setText(
             f"<span style='color:#e65100; font-weight:bold;'>Silhouette score: {score:.3f}</span>"
-            f"<br>"
-            f"<span style='font-size:11px; color:#777; font-weight:normal;'>"
-            f"Višje vrednosti pomenijo bolj jasno ločene gruče."
-            f"</span>"
         )
         self.silhouette_label.setTextFormat(Qt.RichText)
         self.silhouette_label.setStyleSheet("")

@@ -144,6 +144,8 @@ class MainWindow(QWidget):
         self.active_topic = topic_name
         self.log(f"Active topic set to: {topic_name}")
         self.selector.set_active_topic(topic_name)
+        num_news = self.selector.topic_counts.get(topic_name, 0)
+        self.log(f"Topic [{topic_name}] contains [{num_news}] articles.")
 
     def handle_regression_selection(self, regression_name):
         self.active_reg = regression_name

@@ -26,7 +26,7 @@ class NewsDetailWindow(QDialog):
 
             # Build HTML representation
             geo_html = """
-            <div style="padding: 8px 12px; font-size: 13px; color: #333;"><strong>Regije:</strong>
+            <div style="padding: 8px 12px; font-size: 13px; color: #333;"><strong>Regije, kamor članek sodi:</strong>
             """
             for r_name, settlements in region_groups.items():
                 settlements_str = ", ".join(settlements)

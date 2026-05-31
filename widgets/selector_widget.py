@@ -340,3 +340,33 @@ class SelectorWidget(QWidget):
     def open_detail_window(self, title, content, importance_list, intersected_regions):
         self.detail_window = NewsDetailWindow(title, content, importance_list, intersected_regions, self)
         self.detail_window.show()
+    
+    def reset_all_except_regions(self):
+        """Clears and resets all UI components and states except for the selected regions display."""
+        # 1. Clear dynamic topic data structures and dropdown
+        self.clear_topics()
+        
+        # 2. Clear news container layouts/rendered articles
+        self.clear_news()
+        
+        # 3. Reset spin boxes back to their fallback defaults
+        self.cluster_count.setValue(3)
+        self.cluster_count.setEnabled(True)
+        self.article_count.setValue(3)
+        
+        # 4. Reset radio buttons back to the default fallback ("auto-reg")
+        for rb in self.radio_buttons:
+            rb.setEnabled(True)
+            if rb.text() == "auto-reg":
+                rb.setChecked(True)
+            else:
+                rb.setChecked(False)
+                
+        # 5. Clear silhouette metrics completely
+        self.set_silhouette_score("-")
+        
+        # 6. Revert Status bar messaging to default instructions
+        self.set_status(
+            "Pripravljeno. Izberi <span style='color: #e65100;'>regijo</span> in "
+            "<span style='color: #e65100;'>obdobje</span>, nato klikni <span style='color: #e65100;'>Procesiraj podatke</span>."
+        )

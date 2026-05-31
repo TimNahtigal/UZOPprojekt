@@ -58,7 +58,7 @@ class MainWindow(QWidget):
         self.selector.auto_cluster_clicked.connect(self.handle_auto_cluster)
         self.selector.reset_clicked.connect(self.handle_reset)
 
-        self.log("Using [35657] filtered articles of [72446] news articles")
+        self.log("Using [31223] filtered articles of [72446] news articles")
 
     def log(self, obj):
         self.console.log(str(obj))
@@ -79,6 +79,7 @@ class MainWindow(QWidget):
         self.current_end = end
 
     def handle_map_selection(self, region_name):
+        self.selector.reset_all_except_regions()
         if region_name in self.selected_regions:
             self.selected_regions.remove(region_name)
         else:

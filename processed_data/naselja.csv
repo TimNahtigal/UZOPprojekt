@@ -75,7 +75,6 @@
 79,Belšinja Vas,Belšinje Vasa,Belšinji Vasu,45.9104,15.0086,Jugovzhodna Slovenija,SI037
 80,Beltinci,Beltincev,Beltincih,46.606,16.2328,Pomurska,SI031
 81,Belvedur,Belvedura,Belveduru,45.55,13.7333,Obalno-kraška,SI044
-82,Benečija,Benečije,Benečiji,45.9104,15.0086,Jugovzhodna Slovenija,SI037
 83,Benedikt,Benedikta,Benediktu,46.6065,15.8842,Podravska,SI032
 84,Benica,Benice,Benici,46.5631,16.4519,Pomurska,SI031
 85,Berinjak,Berinjaka,Berinjaku,45.8484,14.6944,Osrednjeslovenska,SI041
@@ -348,7 +347,6 @@
 377,Cajnarje,Cajnarja,Cajnarju,45.7964,14.3581,Primorsko-notranjska,SI038
 378,Cegelnica,Cegelnice,Cegelnici,46.2749,14.3176,Gorenjska,SI042
 379,Celestrina,Celestrine,Celestrini,46.5575,15.6456,Podravska,SI032
-380,Celine,Celina,Celinu,45.95,15.4833,Posavska,SI036
 381,Celje,Celja,Celju,46.2358,15.2675,Savinjska,SI034
 382,Cenkova,Cenkove,Cenkovi,46.566,15.9429,Podravska,SI032
 384,Cepki,Cepkiv,Cepkih,45.55,13.7333,Obalno-kraška,SI044
@@ -746,7 +744,6 @@
 795,Dragučova,Dragučove,Dragučovi,46.6099,15.6714,Podravska,SI032
 796,Drakovci,Drakovciv,Drakovcih,46.5168,16.2027,Pomurska,SI031
 797,Drakšl,Drakšla,Drakšlu,46.4086,16.1475,Podravska,SI032
-798,Drama,Drame,Drami,45.8389,15.3361,Jugovzhodna Slovenija,SI037
 799,Dramlja,Dramlje,Dramlji,45.9048,15.5922,Posavska,SI036
 800,Dramlje,Dramelj,Dramljah,46.2176,15.396,Savinjska,SI034
 801,Drankovec,Drankovca,Drankovcu,46.6099,15.6714,Podravska,SI032
@@ -791,7 +788,6 @@
 840,Dule,Dula,Dulu,45.74,14.7308,Jugovzhodna Slovenija,SI037
 841,Dule,Dula,Dulu,46.5372,15.2733,Koroška,SI033
 842,Dule,Dula,Dulu,45.9069,15.2914,Jugovzhodna Slovenija,SI037
-843,Dunaj,Dunaja,Dunaju,45.95,15.4833,Posavska,SI036
 844,Dupeljne,Dupeljna,Dupeljnu,46.1686,14.6892,Osrednjeslovenska,SI041
 845,Duplje,Duplja,Duplju,45.8476,13.9624,Goriška,SI043
 846,Dutovlje,Dutovlja,Dutovlju,45.7034,13.8706,Obalno-kraška,SI044
@@ -1300,7 +1296,6 @@
 1390,Ivenca,Ivence,Ivenci,46.2933,15.3052,Savinjska,SI034
 1391,Izgorje,Izgorja,Izgorju,46.0469,14.1097,Gorenjska,SI042
 1392,Izola,Izole,Izoli,45.5344,13.6675,Obalno-kraška,SI044
-1393,Izvir,Izvira,Izviru,45.9048,15.5922,Posavska,SI036
 1394,Ižakovci,Ižakovciv,Ižakovcih,46.606,16.2328,Pomurska,SI031
 1395,Jablan,Jablana,Jablanu,45.858,15.0876,Jugovzhodna Slovenija,SI037
 1396,Jablanica,Jablanice,Jablanici,45.5679,14.2527,Primorsko-notranjska,SI038
@@ -1686,7 +1681,6 @@
 1804,Križevci,Križevcev,Križevcih,46.805,16.2172,Pomurska,SI031
 1805,Križevci Pri Ljutomeru,Križevciv Priv Ljutomerua,Križevcih Prih Ljutomeruu,46.5631,16.1399,Pomurska,SI031
 1806,Križevec,Križevca,Križevcu,46.375,15.3854,Savinjska,SI034
-1807,Križišče,Križišča,Križišču,46.0092,15.3041,Posavska,SI036
 1808,Križna Gora,Križne Gore,Križni Gori,45.8861,13.9097,Goriška,SI043
 1809,Križna Gora,Križne Gore,Križni Gori,46.1672,14.303,Gorenjska,SI042
 1810,Križni Vrh,Križniv Vrha,Križnih Vrhu,46.3903,15.575,Podravska,SI032
@@ -2207,7 +2201,6 @@
 2341,Miliči,Miličiv,Miličih,45.5711,15.1889,Jugovzhodna Slovenija,SI037
 2342,Milje,Milja,Milju,46.243,14.4181,Gorenjska,SI042
 2343,Mirke,Mirka,Mirku,45.9624,14.2937,Osrednjeslovenska,SI041
-2344,Mirna,Mirne,Mirni,45.9476,15.0664,Jugovzhodna Slovenija,SI037
 2345,Mirna Peč,Mirne Peči,Mirni Peči,45.858,15.0876,Jugovzhodna Slovenija,SI037
 2346,Misliče,Misliča,Misliču,45.682,13.9702,Obalno-kraška,SI044
 2347,Mislinja,Mislinje,Mislinji,46.4431,15.1931,Koroška,SI033
@@ -2243,9 +2236,7 @@
 2377,Moravče,Moravč,Moravčah,46.1356,14.7439,Osrednjeslovenska,SI041
 2378,Moravče Pri Gabrovki,Moravča Priv Gabrovkiv,Moravču Prih Gabrovkih,46.0667,14.8167,Zasavska,SI035
 2379,Moravška Gora,Moravške Gore,Moravški Gori,46.0667,14.8167,Zasavska,SI035
-2380,Morsko,Morska,Morsku,46.088,13.6347,Goriška,SI043
 2381,Most Na Soči,Mosta Ne Sočiv,Mostu Ni Sočih,46.1857,13.7352,Goriška,SI043
-2382,Moste,Mosta,Mostu,46.2073,14.539,Osrednjeslovenska,SI041
 2383,Mostec,Mostca,Mostcu,45.9048,15.5922,Posavska,SI036
 2384,Mostečno,Mostečna,Mostečnu,46.3174,15.6669,Podravska,SI032
 2385,Mostje,Mostja,Mostju,46.4853,15.971,Podravska,SI032
@@ -2368,14 +2359,12 @@
 2506,Obrežje Pri Zidanem Mostu,Obrežja Priv Zidanema Mostua,Obrežju Prih Zidanemu Mostuu,46.1563,15.2386,Savinjska,SI034
 2507,Obrh,Obrha,Obrhu,45.7545,15.0583,Jugovzhodna Slovenija,SI037
 2508,Obrh Pri Dragatušu,Obrha Priv Dragatušua,Obrhu Prih Dragatušuu,45.5711,15.1889,Jugovzhodna Slovenija,SI037
-2509,Obrne,Obrna,Obrnu,46.3688,14.114,Gorenjska,SI042
 2510,Obrše,Obrša,Obršu,46.1686,14.6892,Osrednjeslovenska,SI041
 2511,Ocinje,Ocinja,Ocinju,46.8053,16.0344,Pomurska,SI031
 2512,Odranci,Odrancev,Odrancih,46.5856,16.2753,Pomurska,SI031
 2513,Odrga,Odrge,Odrgi,45.9104,15.0086,Jugovzhodna Slovenija,SI037
 2514,Ogljenšak,Ogljenšaka,Ogljenšaku,46.3903,15.575,Podravska,SI032
 2515,Ogorevc,Ogorevca,Ogorevcu,46.2219,15.3111,Savinjska,SI034
-2516,Ograja,Ograje,Ograji,45.643,14.8594,Jugovzhodna Slovenija,SI037
 2517,Ogulin,Ogulina,Ogulinu,45.5711,15.1889,Jugovzhodna Slovenija,SI037
 2518,Ohonica,Ohonice,Ohonici,45.9197,14.3572,Osrednjeslovenska,SI041
 2519,Ojstri Vrh,Ojstriv Vrha,Ojstrih Vrhu,46.2182,14.1592,Gorenjska,SI042
@@ -2755,9 +2744,6 @@
 2918,Polenšak,Polenšaka,Polenšaku,46.4299,15.9488,Podravska,SI032
 2919,Poletiči,Poletičiv,Poletičih,45.55,13.7333,Obalno-kraška,SI044
 2920,Polhovica,Polhovice,Polhovici,45.8389,15.3361,Jugovzhodna Slovenija,SI037
-2921,Polica,Police,Polici,45.9551,14.6562,Osrednjeslovenska,SI041
-2922,Polica,Police,Polici,46.2749,14.3176,Gorenjska,SI042
-2923,Police,Polica,Policu,46.1278,13.9875,Goriška,SI043
 2924,Polička Vas,Poličke Vasa,Polički Vasu,46.6099,15.6714,Podravska,SI032
 2925,Polički Vrh,Poličkiv Vrha,Poličkih Vrhu,46.6099,15.6714,Podravska,SI032
 2926,Poljana,Poljane,Poljani,46.2257,14.612,Osrednjeslovenska,SI041
@@ -2777,7 +2763,6 @@
 2941,Polje Pri Vodicah,Polja Priv Vodicaha,Polju Prih Vodicahu,46.1897,14.4944,Osrednjeslovenska,SI041
 2942,Poljšica Pri Podnartu,Poljšice Priv Podnartua,Poljšici Prih Podnartuu,46.3425,14.1721,Gorenjska,SI042
 2943,Poljubinj,Poljubinja,Poljubinju,46.1857,13.7352,Goriška,SI043
-2944,Polom,Poloma,Polomu,45.643,14.8594,Jugovzhodna Slovenija,SI037
 2945,Polšnik,Polšnika,Polšniku,46.0667,14.8167,Zasavska,SI035
 2946,Polzela,Polzele,Polzeli,46.2809,15.074,Savinjska,SI034
 2947,Polzelo,Polzela,Polzelu,45.8363,14.6377,Osrednjeslovenska,SI041
@@ -3197,7 +3182,6 @@
 3391,Rut,Ruta,Rutu,46.1857,13.7352,Goriška,SI043
 3392,Ržišče,Ržišča,Ržišču,46.0667,14.8167,Zasavska,SI035
 3393,Sabonje,Sabonja,Sabonju,45.5679,14.2527,Primorsko-notranjska,SI038
-3394,Sad,Sada,Sadu,45.9374,14.8029,Osrednjeslovenska,SI041
 3395,Sadinja Vas,Sadinje Vasa,Sadinji Vasu,46.0514,14.5061,Osrednjeslovenska,SI041
 3396,Sadinja Vas Pri Dvoru,Sadinje Vasa Priv Dvorua,Sadinji Vasu Prih Dvoruu,45.8339,14.9292,Jugovzhodna Slovenija,SI037
 3397,Sadni Hrib,Sadniv Hriba,Sadnih Hribu,45.643,14.8594,Jugovzhodna Slovenija,SI037
@@ -3937,7 +3921,6 @@
 4156,Topolovo,Topolova,Topolovu,46.074,15.559,Savinjska,SI034
 4157,Topolšica,Topolšice,Topolšici,46.3798,15.0482,Savinjska,SI034
 4158,Topovlje,Topovlja,Topovlju,46.2884,15.0386,Savinjska,SI034
-4159,Torka,Torke,Torki,46.2182,14.1592,Gorenjska,SI042
 4160,Torovo,Torova,Torovu,46.1897,14.4944,Osrednjeslovenska,SI041
 4161,Toško Čelo,Toška Čela,Tošku Čelu,46.0514,14.5061,Osrednjeslovenska,SI041
 4162,Tovsto,Tovsta,Tovstu,46.1563,15.2386,Savinjska,SI034
@@ -4219,7 +4202,6 @@
 4443,Vinji Vrh,Vinjiv Vrha,Vinjih Vrhu,45.8622,15.2214,Jugovzhodna Slovenija,SI037
 4444,Vinji Vrh Pri Semiču,Vinjiv Vrha Priv Semičua,Vinjih Vrhu Prih Semičuu,45.6546,15.1783,Jugovzhodna Slovenija,SI037
 4445,Vinkov Vrh,Vinkova Vrha,Vinkovu Vrhu,45.8339,14.9292,Jugovzhodna Slovenija,SI037
-4446,Vino,Vina,Vinu,45.9551,14.6562,Osrednjeslovenska,SI041
 4447,Vinska Gora,Vinske Gore,Vinski Gori,46.3625,15.1144,Savinjska,SI034
 4448,Vinska Gorica,Vinske Gorice,Vinski Gorici,46.3381,15.2293,Savinjska,SI034
 4449,Vinski Vrh,Vinskiv Vrha,Vinskih Vrhu,46.4086,16.1475,Podravska,SI032
@@ -4640,7 +4622,6 @@
 4879,Žaga,Žage,Žagi,45.8363,14.6377,Osrednjeslovenska,SI041
 4880,Žagolič,Žagoliča,Žagoliču,45.8861,13.9097,Goriška,SI043
 4881,Žalec,Žalca,Žalcu,46.251,15.1639,Savinjska,SI034
-4882,Žalna,Žalne,Žalni,45.9551,14.6562,Osrednjeslovenska,SI041
 4883,Žaloviče,Žaloviča,Žaloviču,45.8622,15.2214,Jugovzhodna Slovenija,SI037
 4884,Žamenci,Žamenciv,Žamencih,46.4299,15.9488,Podravska,SI032
 4885,Žapuže,Žapuža,Žapužu,45.8861,13.9097,Goriška,SI043
